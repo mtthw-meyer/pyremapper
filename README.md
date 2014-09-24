@@ -3,7 +3,8 @@ pyremapper
 
 Python based joystick remapper
 
-Requires:
+Requires
+
 vJoy v2.x. You can get vJoy here http://vjoystick.sourceforge.net/site/
 pygame 1.9.x You can get pygame here http://www.pygame.org/download.shtml
 pyHook You can get pyHook here http://sourceforge.net/projects/pyhook/
