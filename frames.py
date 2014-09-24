@@ -61,12 +61,14 @@ class JoystickFrame(ttk.Frame):
 
       # Create input binds
       for binding_number in range(3):
+         # Bind frame
          option_frame = ttk.Frame(keyboard_options_frame)
          option_frame.grid(row = binding_number + 2, column = 1, columnspan = 5, stick='W', padx = 20)
+         # Bind label
          bound_button_widget = ttk.Label(option_frame, text = 'N/A')
          bound_button_widget.pack(side = 'left')
          # Create a button widget and bind it to bind_button_callback
-         # This will configure the label and setup the hotkey
+         # This will configure the label text and setup the hotkey
          entry_var = Tkinter.StringVar()
          variables['entry_%i' % binding_number] = entry_var
          button_widget = ttk.Button(
@@ -74,25 +76,33 @@ class JoystickFrame(ttk.Frame):
             text = 'Bind',
             command = lambda var = entry_var, widget = bound_button_widget: self.bind_button_callback(widget, axis, var)
          ).pack(side = 'left')
+         # Label and entry for value
          ttk.Label(option_frame, text = 'Value').pack(side = 'left')
          ttk.Entry(option_frame, width = 7, textvariable = entry_var).pack(side = 'left')
 
-      # Create auto center options
+      # Auto center frame
       auto_center_frame = ttk.Frame(keyboard_options_frame)
       auto_center_frame.grid(row = 5, column = 1, columnspan = 5, stick='W', padx = 20)
-      variables['auto_center'] = Tkinter.IntVar()
-      entry = ttk.Entry(auto_center_frame, state = DISABLE, width = 5)
+      # Auto center checkbutton
+      auto_center_checkbutton_var = Tkinter.IntVar()
+      variables['auto_center_checkbutton_var'] = auto_center_checkbutton_var
       checkbutton = ttk.Checkbutton(
          auto_center_frame,
          text = 'Auto center',
          variable = variables['auto_center']
       )
+      # Auto center entry
+      auto_center_entry_var = Tkinter.StringVar()
+      variables['auto_center_entry_var'] = auto_center_entry_var
+      entry = ttk.Entry(auto_center_frame, state = DISABLE, width = 5, textvariable = auto_center_entry_var )
 
       def auto_center_changed_callback(*args):
-         entry.state( ENABLE if variables['auto_center'].get() else DISABLE )
+         entry.state( ENABLE if auto_center_checkbutton_var.get() else DISABLE )
+         if not auto_center_entry_var.get():
+            auto_center_entry_var.set('0')
          return
 
-      variables['auto_center'].trace('w', auto_center_changed_callback)
+      auto_center_checkbutton_var.trace('w', auto_center_changed_callback)
       
       checkbutton.pack(side = 'left')
       entry.pack(side = 'left')
