@@ -56,6 +56,15 @@ class vJoy:
       self.vjoy_devices = dict()
       return
 
+   def __len__(self):
+      return len(self._devices)
+
+   def __iter__(self):
+      return self._devices.__iter__()
+
+   def __getitem__(self, id):
+      return self._devices[id]
+
    def quit(self):
       for id in self._devices.keys():
          self.relinquish_device(id)

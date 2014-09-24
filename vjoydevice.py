@@ -82,28 +82,28 @@ class vJoyDevice:
       self.button_count = self._vJoyInterface.GetVJDButtonNumber(self.id)
       self.discrete_hats = self._vJoyInterface.GetVJDDiscPovNumber(self.id)
       self.continuous_hats = self._vJoyInterface.GetVJDContPovNumber(self.id)
-      self._axes = {}
+      self.axes = dict()
       for HID, field in self._AXES.items():
          if self._vJoyInterface.GetVJDAxisExist(self.id, HID):
             min = c_int()
             max = c_int()
             self._vJoyInterface.GetVJDAxisMax(self.id, HID, pointer(min))
             self._vJoyInterface.GetVJDAxisMin(self.id, HID, pointer(max))
-            self._axes[HID] = {
+            self.axes[HID] = {
                'min': min.value,
                'max': max.value,
                'center': (min.value + max.value) / 2,
             }
             if HID <= HID_USAGE_Z:
-               position_data[field] = self._axes[HID]['center']
+               position_data[field] = self.axes[HID]['center']
             else:
-               position_data[field] = self._axes[HID]['max']
+               position_data[field] = self.axes[HID]['max']
       self.position = vJoyPosition(**position_data)
       return
 
    def set_axis(self, HID, value):
       if type(value) == float:
-         center = self._axes[HID]['center']
+         center = self.axes[HID]['center']
          value = int(center * value + center)
       field = self._AXES.get(HID, None)
       if field is not None:
@@ -111,13 +111,13 @@ class vJoyDevice:
       return
 
    def get_axis_min(self, HID):
-      return self._axes[HID]['min']
+      return self.axes[HID]['min']
 
    def get_axis_max(self, HID):
-      return self._axes[HID]['max']
+      return self.axes[HID]['max']
       
    def get_axis_center(self, HID):
-      return self._axes[HID]['center']
+      return self.axes[HID]['center']
 
    def update(self):
       #VJOYINTERFACE_API BOOL		__cdecl	UpdateVJD(UINT rID, PVOID pData);	// Update the position data of the specified vJoy Device.

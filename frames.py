@@ -25,7 +25,7 @@ class JoystickFrame(ttk.Frame):
       self.joysticks = joystick_manager.get_joysticks()
       self.keyboard_manager = keyboard_manager
       
-      for axis, data in vJoystick._axes.items():
+      for axis, data in vJoystick.axes.items():
          axis_number = (axis - 0x2F)
          self.tk_variables[axis_number] = dict()
          axis_variables = self.tk_variables[axis_number]

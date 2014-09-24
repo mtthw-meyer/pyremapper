@@ -4,6 +4,37 @@ import pygame
 from vjoy import *
 
 
+class Enum(object):
+   def __init__(self, items):
+      self.__items = items
+      self.__length = len(items)
+      self.__range = range(self.__length)
+      for item, value in zip(self.__items, self.__range):
+         setattr(self, item, value)
+      return
+
+   def __len__(self):
+      return self.__length
+
+   def __iter__(self):
+      return self.__range.__iter__()
+
+
+vJoyComponent = Enum([
+   'axis',
+   'button',
+   'discrete',
+   'continuous',
+])
+
+pygameJoyComponent = Enum([
+   'axis',
+   'button',
+   'hat',
+   'ball',
+])
+
+
 class JoystickManager:
    __max_vJoysticks = 8
 
@@ -12,7 +43,7 @@ class JoystickManager:
       self.pygame = pygame
       self.pygame.init()
       self.running = False
-      self.maps = dict( [(id, dict()) for id in range(1, self.__max_vJoysticks+1)] )
+      self.mappings = dict( [(id, dict()) for id in range(1, self.__max_vJoysticks+1)] )
 
       # Initialize vJoy
       self.vjoy = vJoy()
@@ -26,20 +57,26 @@ class JoystickManager:
          self.joysticks[id].init()
       return
 
-   def add_map(self, vjoy_id, vjoy_axis, pygame_id, pygame_axis, mapping_func = None):
-      self.maps[vjoy_id][vjoy_axis] = (pygame_id, pygame_axis, mapping_func)
+   def add_map(self, vjoy_id, vjoy_component, vjoy_component_id, pygame_id, pygame_component, pygame_component_id, mapping_func):
+      vjoy_tuple = (vjoy_id, vjoy_component, vjoy_component_id)
+      self.mappings[vjoy_tuple] = (pygame_id, pygame_component, pygame_component_id, mapping_func)
       return
 
-   def remove_map(self, vjoy_id, vjoy_axis):
-      self.maps[vjoy_id][vjoy_axis] = None
+   def remove_map(self, vjoy_id, vjoy_component, vjoy_component_id):
+      vjoy_tuple = (vjoy_id, vjoy_component, vjoy_component_id)
+      if vjoy_tuple in self.mappings:
+         self.mappings.pop((vjoy_id, vjoy_component, vjoy_component_id))
       return
 
-   def map_joystick(self, vjoy_id, vjoy_axis, pygame_id, pygame_axis, mapping_func):
-      axis_value = self.joysticks[pygame_id].get_axis(pygame_axis)
-      if mapping_func is not None:
-         axis_value = mapping_func(axis_value)
+   def run_map(self, vjoy_id, vjoy_component, vjoy_component_id, pygame_id, pygame_component, pygame_component_id, mapping_func):
       vJoystick = self.get_vJoystick(vjoy_id)
-      vJoystick.set_axis(vjoy_axis, axis_value)
+      if pygame_component == pygameJoyComponent.axis:
+         pygame_value = self.joysticks[pygame_id].get_axis(pygame_component_id)
+         pygame_value = mapping_func(pygame_value)
+      else:
+         return False
+      if vjoy_component == vJoyComponent.axis:
+         vJoystick.set_axis(vjoy_component_id, pygame_value)
       return
 
    def quit(self):
@@ -57,20 +94,18 @@ class JoystickManager:
    def get_joysticks(self):
       return self.joysticks
 
-   def pump_loop(self):
+   def pump(self):
       while self.running:
          pygame.event.pump()
          self.vjoy.pump()
-         for vjoy_id, vjoy_axis_dict in self.maps.items():
-            for vjoy_axis, data in vjoy_axis_dict.items():
-               if data is not None:
-                  self.map_joystick(vjoy_id, vjoy_axis, *data)
+         for vjoy_tuple, pygame_tuple in self.mappings.items():
+            self.run_map(*(vjoy_tuple + pygame_tuple))
          time.sleep(.01)
       return
 
-   def pump(self):
+   def start(self):
       self.running = True
-      self.thread = threading.Thread(target = self.pump_loop)
+      self.thread = threading.Thread(target = self.pump)
       self.thread.daemon = True
       self.thread.start()
       return

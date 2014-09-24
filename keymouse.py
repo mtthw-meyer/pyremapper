@@ -10,9 +10,9 @@ import pyHook
 
 class KeyMouseManager:
    def __init__(self):
-      self._keys_down = set()
-      self._hotkeys = dict()
-      self._key_sets = dict()
+      self.keys_down = set()
+      self.hotkeys = dict()
+      self.key_sets = dict()
 
       # Create a hook manager
       self._hook_manager = pyHook.HookManager()
@@ -23,21 +23,20 @@ class KeyMouseManager:
 
       # Set the keyboard hook
       self._hook_manager.HookKeyboard()
-      
-      self.add_hotkey(['Lcontrol','Lshift','Q'], self.end)
-      
-   def get_keys_down(self):
-      return self._keys_down.copy()
+      return
+
+   def getkeys_down(self):
+      return self.keys_down.copy()
 
    def _on_key_down(self, event):
-      self._keys_down.add(ID2Key[event.KeyID])
-      print multiprocessing.current_process().name, self._keys_down
+      self.keys_down.add(ID2Key[event.KeyID])
+      print multiprocessing.current_process().name, self.keys_down
 
-      for hotkey in self._hotkeys.values():
+      for hotkey in self.hotkeys.values():
          # Ignore on up hotkeys
          if hotkey.on_up:
             continue
-         elif hotkey.match(self._keys_down):
+         elif hotkey.match(self.keys_down):
             hotkey.run()
          elif self.hotkey_in_keyset(hotkey):
             hotkey.run()
@@ -48,25 +47,25 @@ class KeyMouseManager:
       key_up = ID2Key[event.KeyID]
       key_up_set = frozenset(key_up)
 
-      for hotkey in self._hotkeys.values():
+      for hotkey in self.hotkeys.values():
          # Ignore on down hotkeys
          if not hotkey.on_up:
             continue
          # If its an up key 
          # AND it matches what was pushed
          # AND the key being released is a subset of the set, run the hotkey
-         elif hotkey.match(self._keys_down) and key_up_set.issubset(hotkey._keys):
+         elif hotkey.match(self.keys_down) and key_up_set.issubset(hotkey._keys):
             hotkey.run()
-         elif self.hotkey_in_keyset(hotkey) and not hotkey.issubset(self._keys_down - key_up_set):
+         elif self.hotkey_in_keyset(hotkey) and not hotkey.issubset(self.keys_down - key_up_set):
             hotkey.run()
-      self._keys_down.remove(key_up)
+      self.keys_down.remove(key_up)
       return True
       
    def hotkey_in_keyset(self, hotkey):
       if hotkey.key_set is not None:
-         if hotkey.issubset(self._keys_down):
-            free_keys = self._keys_down
-            for key in self._key_sets[hotkey.key_set]:
+         if hotkey.issubset(self.keys_down):
+            free_keys = self.keys_down
+            for key in self.key_sets[hotkey.key_set]:
                free_keys = free_keys - key
             if len(free_keys) == 0:
                return True
@@ -75,20 +74,20 @@ class KeyMouseManager:
    def add_hotkey(self, keys, func, on_up = False, **kwargs):
       id = uuid.uuid4().hex
       hotkey = HotKey(keys, func, on_up, **kwargs)
-      self._hotkeys[id] = hotkey
+      self.hotkeys[id] = hotkey
 
       # 
       if hotkey.key_set is not None:
          # Check for existing key_set
-         if hotkey.key_set not in self._key_sets:
-            self._key_sets[hotkey.key_set] = set()
-         self._key_sets[hotkey.key_set].add(hotkey._keys)
+         if hotkey.key_set not in self.key_sets:
+            self.key_sets[hotkey.key_set] = set()
+         self.key_sets[hotkey.key_set].add(hotkey._keys)
 
       return id
 
    def remove_hotkey(self, id):
-      if id in self._hotkeys:
-         self._hotkeys.pop(id)
+      if id in self.hotkeys:
+         self.hotkeys.pop(id)
          return True
       return False
    
@@ -100,7 +99,7 @@ class KeyMouseManager:
       pythoncom.PumpMessages()
       return
 
-   def end(self):
+   def quit(self):
       ctypes.windll.user32.PostQuitMessage(0)
 
 

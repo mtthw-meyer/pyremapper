@@ -21,7 +21,7 @@ class Remapper(Tkinter.Tk):
 
       self.key_mouse_manager = KeyMouseManager()
       self.joystick_manager = JoystickManager()
-      self.joystick_manager.pump()
+      self.joystick_manager.start()
       self.key_mouse_daemon = None
 
       self.initialize()
