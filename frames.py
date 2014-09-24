@@ -2,6 +2,8 @@ import Tkinter
 import ttk
 import time
 
+from dialog import *
+
 DISABLE = ('disabled',)
 ENABLE = ('!disabled',)
 
@@ -48,18 +50,14 @@ class JoystickFrame(ttk.Frame):
       return
       
    def bind_button_callback(self, widget, axis, tk_var):
-      return
-      # While no keys are pressed, wait
-      while not self.keyboard_manager.get_keys_down():
-         time.sleep(.05)
-      #keys_down = self.keyboard_manager.get_keys_down()
-      #text = [ i for i in keys_down ]
+      binder = Binder(self.parent, self.keyboard_manager)
+      keys_down = binder.value
+      text = [ i for i in keys_down ]
       widget.configure(text = text)
       self.keyboard_manager.add_hotkey(
          keys_down,
          lambda: self.vJoystick.set_axis(axis, float(tk_var.get()))
       )
-      print 'Binding done!'
       return
 
    def keyboard_options(self, parent, variables, axis):

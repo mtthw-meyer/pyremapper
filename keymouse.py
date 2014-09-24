@@ -7,6 +7,8 @@ import multiprocessing
 import pythoncom
 import pyHook
 
+import Tkinter
+
 
 class KeyMouseManager:
    def __init__(self):
@@ -30,7 +32,6 @@ class KeyMouseManager:
 
    def _on_key_down(self, event):
       self.keys_down.add(ID2Key[event.KeyID])
-      print multiprocessing.current_process().name, self.keys_down
 
       for hotkey in self.hotkeys.values():
          # Ignore on up hotkeys
@@ -40,7 +41,6 @@ class KeyMouseManager:
             hotkey.run()
          elif self.hotkey_in_keyset(hotkey):
             hotkey.run()
-
       return True
 
    def _on_key_up(self, event):

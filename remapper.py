@@ -42,7 +42,7 @@ class Remapper(Tkinter.Tk):
       self.notebook.pack()
       # For each vJoystick create a tab
       for vJoy_id, vJoystick in self.joystick_manager.get_vJoysticks().items():
-         frame = JoystickFrame(vJoystick, self.joystick_manager, self.key_mouse_manager)
+         frame = JoystickFrame(vJoystick, self.joystick_manager, self.key_mouse_manager, self)
          frame.pack()
          self.notebook.add(frame, text='Virtual Joystick %s' % vJoy_id)
 
@@ -65,15 +65,6 @@ class Remapper(Tkinter.Tk):
       # Display the menu
       self.config(menu = self.menu)
 
-   def pump(self):
-      self.key_mouse_manager.pump()
-      self.joystick_manager.pump()
-      # Reregister event callback because Tk is stupid
-      self.after(self.PUMP_DELAY, self.pump)
-      #if self.state() != 'normal':
-       #  print self.state()
-      return
-      
    def update_thread(self):
       thread = threading.Thread(target = self.update_me)
       thread.daemon = True
