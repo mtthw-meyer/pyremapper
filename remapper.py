@@ -1,7 +1,7 @@
-#!/usr/bin/python
 import Tkinter
 import ttk
 import time
+import threading
 import multiprocessing
 
 from joystick import *
@@ -13,12 +13,13 @@ from tools import *
 class Remapper(Tkinter.Tk):
    PUMP_DELAY = 10
 
-   def __init__(self, parent = None):
+   def __init__(self, parent = None, mappings = None):
       #TK setup
       Tkinter.Tk.__init__(self, parent)
       self.parent = parent
       self.title('Joystick Remapper')
 
+      self.mappings = mappings
       self.key_mouse_manager = KeyMouseManager()
       self.joystick_manager = JoystickManager()
       self.joystick_manager.start()
@@ -65,12 +66,6 @@ class Remapper(Tkinter.Tk):
       # Display the menu
       self.config(menu = self.menu)
 
-   def update_thread(self):
-      thread = threading.Thread(target = self.update_me)
-      thread.daemon = True
-      thread.start()
-      return
-   
    def update_me(self):
       while not self.has_focus:
          self.update()

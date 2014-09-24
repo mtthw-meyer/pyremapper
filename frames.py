@@ -8,13 +8,6 @@ DISABLE = ('disabled',)
 ENABLE = ('!disabled',)
 
 
-def blah(vJoystick, axis, tk_var):
-   print vJoystick.set_axis
-   print axis
-   print tk_var.get()
-   return True
-
-
 class JoystickFrame(ttk.Frame):
    def __init__(self, vJoystick, joystick_manager, keyboard_manager, parent = None, **kwargs):
       #TK setup

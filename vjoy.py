@@ -1,4 +1,3 @@
-#!/usr/bin/python
 import os
 from ctypes import cdll
 

@@ -5,7 +5,7 @@ import time
 import threading
 import Queue
 
-
+# Class taken from http://effbot.org/tkinterbook/tkinter-dialog-windows.htm and modified
 class Dialog(Tkinter.Toplevel):
    def __init__(self, parent, title = None):
       Tkinter.Toplevel.__init__(self, parent)

@@ -1,4 +1,3 @@
-#!/usr/bin/python
 from ctypes import *
 from ctypes.wintypes import *
 

@@ -1,4 +1,3 @@
-#!/usr/bin/python
 import uuid
 import ctypes
 import threading
