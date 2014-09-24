@@ -6,8 +6,11 @@ Python based joystick remapper
 Requires
 
 vJoy v2.x. You can get vJoy here http://vjoystick.sourceforge.net/site/
+
 pygame 1.9.x You can get pygame here http://www.pygame.org/download.shtml
+
 pyHook You can get pyHook here http://sourceforge.net/projects/pyhook/
+
 pywin32 You can get pywin32 here http://sourceforge.net/projects/pywin32/files/
 
 Copyright (c) 2014 Matthew Meyer
