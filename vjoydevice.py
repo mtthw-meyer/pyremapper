@@ -94,7 +94,10 @@ class vJoyDevice:
                'max': max.value,
                'center': (min.value + max.value) / 2,
             }
-            position_data[field] = self._axes[HID]['center']
+            if HID <= HID_USAGE_Z:
+               position_data[field] = self._axes[HID]['center']
+            else:
+               position_data[field] = self._axes[HID]['max']
       self.position = vJoyPosition(**position_data)
       return
 

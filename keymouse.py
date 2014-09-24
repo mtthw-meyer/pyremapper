@@ -2,6 +2,7 @@
 import uuid
 import ctypes
 import threading
+import multiprocessing
 
 import pythoncom
 import pyHook
@@ -30,7 +31,7 @@ class KeyMouseManager:
 
    def _on_key_down(self, event):
       self._keys_down.add(ID2Key[event.KeyID])
-      print self._keys_down
+      print multiprocessing.current_process().name, self._keys_down
 
       for hotkey in self._hotkeys.values():
          # Ignore on up hotkeys
@@ -59,7 +60,6 @@ class KeyMouseManager:
          elif self.hotkey_in_keyset(hotkey) and not hotkey.issubset(self._keys_down - key_up_set):
             hotkey.run()
       self._keys_down.remove(key_up)
-
       return True
       
    def hotkey_in_keyset(self, hotkey):

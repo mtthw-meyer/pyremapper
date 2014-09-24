@@ -34,6 +34,7 @@ class JoystickFrame(ttk.Frame):
          axis_variables['input_type_radio'] = Tkinter.StringVar()
          axis_variables['input_type_radio'].set('keyboard')
          axis_variables['joystick_id'] = Tkinter.StringVar()
+         axis_variables['joystick_axis'] = Tkinter.StringVar()
 
          # Create the frame for the axis
          axis_frame = ttk.LabelFrame(self, text = 'Axis %s' % axis_number, width = 400)
@@ -41,7 +42,7 @@ class JoystickFrame(ttk.Frame):
 
          # Select input type
          self.keyboard_options(axis_frame, axis_variables, axis)
-         self.joystick_options(axis_frame, axis_variables)
+         self.joystick_options(axis_frame, axis_variables, axis)
          self.mouse_options(   axis_frame, axis_variables)
          
       return
@@ -49,12 +50,13 @@ class JoystickFrame(ttk.Frame):
    def bind_button_callback(self, widget, axis, tk_var):
       return
       # While no keys are pressed, wait
+      while not self.keyboard_manager.get_keys_down():
+         time.sleep(.05)
       #keys_down = self.keyboard_manager.get_keys_down()
       #text = [ i for i in keys_down ]
       widget.configure(text = text)
       self.keyboard_manager.add_hotkey(
          keys_down,
-         #lambda: blah(self.vJoystick, axis, tk_var)
          lambda: self.vJoystick.set_axis(axis, float(tk_var.get()))
       )
       print 'Binding done!'
@@ -105,7 +107,7 @@ class JoystickFrame(ttk.Frame):
       entry.pack(side = 'left')
       return keyboard_options_frame
 
-   def joystick_options(self, parent, variables):
+   def joystick_options(self, parent, variables, vjoy_axis):
       radio = ttk.Radiobutton(parent, text = 'Joystick', variable = variables['input_type_radio'], value = 'joystick')
       radio.grid(row = 1 , column = 2)
       # Create the joystick options frame
@@ -124,7 +126,7 @@ class JoystickFrame(ttk.Frame):
       joy_id_widget = ttk.Combobox(option_frame, width = 20, values = joystick_names, textvariable = variables['joystick_id'])
       joy_id_widget.pack(side = 'left')
       # Joystick Axis Widget
-      joy_axis_widget = ttk.Combobox(option_frame, width = 5, state = DISABLE )
+      joy_axis_widget = ttk.Combobox(option_frame, width = 5, state = DISABLE, textvariable = variables['joystick_axis'])
       joy_axis_widget.pack(side = 'left')
 
       # Changed axes selection based on joystick ID
@@ -138,6 +140,13 @@ class JoystickFrame(ttk.Frame):
             joy_axis_widget.state(DISABLE)
          return
       variables['joystick_id'].trace('w', joystick_id_changed_callback)
+      
+      def joystick_axis_changed_callback(*args):
+         #add_map(self, vjoy_id, vjoy_axis, pygame_id, pygame_axis, mapping_func = None)
+         print self.vJoystick.id, vjoy_axis, joy_id_widget.current(), joy_axis_widget.current()
+         self.joystick_manager.add_map(self.vJoystick.id, vjoy_axis, joy_id_widget.current()-1, joy_axis_widget.current())
+         return
+      variables['joystick_axis'].trace('w', joystick_axis_changed_callback)
 
       # Mapping methods
       ttk.Label(option_frame, text = 'TODO: Mapping Method').pack(side = 'left')

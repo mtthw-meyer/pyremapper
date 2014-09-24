@@ -31,6 +31,7 @@ class Remapper(Tkinter.Tk):
       self.joystick_manager.quit()
       if self.key_mouse_daemon is not None:
          self.key_mouse_daemon.terminate()
+         self.key_mouse_daemon.join()
       Tkinter.Tk.destroy(self)
       return
 
