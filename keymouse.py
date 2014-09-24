@@ -30,6 +30,7 @@ class KeyMouseManager:
 
    def _on_key_down(self, event):
       self._keys_down.add(ID2Key[event.KeyID])
+      print self._keys_down
 
       for hotkey in self._hotkeys.values():
          # Ignore on up hotkeys
@@ -91,10 +92,14 @@ class KeyMouseManager:
          return True
       return False
    
-   def pump(self):
+   def pump_waiting(self):
       pythoncom.PumpWaitingMessages()
       return
-      
+
+   def pump(self):
+      pythoncom.PumpMessages()
+      return
+
    def end(self):
       ctypes.windll.user32.PostQuitMessage(0)
 

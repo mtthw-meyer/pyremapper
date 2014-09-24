@@ -2,16 +2,12 @@
 import Tkinter
 import ttk
 import time
+import multiprocessing
 
 from joystick import *
 from keymouse import *
 from frames import *
 from tools import *
-
-def blah(event):
-   if event.widget.winfo_name() == 'tk':
-      print event.widget.state()
-   
 
 
 class Remapper(Tkinter.Tk):
@@ -22,30 +18,20 @@ class Remapper(Tkinter.Tk):
       Tkinter.Tk.__init__(self, parent)
       self.parent = parent
       self.title('Joystick Remapper')
-      self.time_to_quit = False
 
       self.key_mouse_manager = KeyMouseManager()
       self.joystick_manager = JoystickManager()
       self.joystick_manager.pump()
+      self.key_mouse_daemon = None
 
       self.initialize()
-      self.bind('<FocusOut>', self.start_pyhook)
-      self.bind('<FocusIn>', self.start_tk)
-
-   def start_pyhook(self, event):
-      if event.widget.winfo_name() == 'tk':
-         print self.focus_get()
-         #self.quit()
-         #self.key_mouse_manager.pump()
       return
 
-   def start_tk(self, event):
-      if event.widget.winfo_name() == 'tk':
-         print 'Restart tk'
-         print self.focus_get()
-      
-   def cleanup(self):
-      self.destroy()
+   def destroy(self):
+      self.joystick_manager.quit()
+      if self.key_mouse_daemon is not None:
+         self.key_mouse_daemon.terminate()
+      Tkinter.Tk.destroy(self)
       return
 
    def initialize(self):
@@ -65,7 +51,7 @@ class Remapper(Tkinter.Tk):
 
       # File menu
       file_menu = Tkinter.Menu(self, tearoff = 0)
-      file_menu.add_command(label = 'Quit', command = self.cleanup)
+      file_menu.add_command(label = 'Quit', command = self.destroy)
       self.menu.add_cascade(label = 'File', menu = file_menu)
 
       # Tools menu
@@ -86,11 +72,24 @@ class Remapper(Tkinter.Tk):
       #if self.state() != 'normal':
        #  print self.state()
       return
+      
+   def update_thread(self):
+      thread = threading.Thread(target = self.update_me)
+      thread.daemon = True
+      thread.start()
+      return
+   
+   def update_me(self):
+      while not self.has_focus:
+         self.update()
+         time.sleep(0.05)
+      return
 
    def start(self):
-      # Register event callback
-      #self.after(self.PUMP_DELAY, self.pump)
+      self.key_mouse_daemon = multiprocessing.Process(target = self.key_mouse_manager.pump)
+      self.key_mouse_daemon.start()
       self.mainloop()
+      return
 
 
 if __name__ == '__main__':

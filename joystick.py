@@ -11,6 +11,7 @@ class JoystickManager:
       # Initialize pygame
       self.pygame = pygame
       self.pygame.init()
+      self.running = False
 
       # Initialize vJoy
       self.vjoy = vJoy()
@@ -22,6 +23,13 @@ class JoystickManager:
       for id in range(0, self.num_joysticks):
          self.joysticks[id] = pygame.joystick.Joystick(id)
          self.joysticks[id].init()
+      return
+
+   def quit(self):
+      self.running = False
+      self.vjoy.quit()
+      self.pygame.quit()
+      return
 
    def get_vJoystick(self, id):
       return self.vjoy.get_device(id)
@@ -33,13 +41,14 @@ class JoystickManager:
       return self.joysticks
 
    def pump_loop(self):
-      while True:
+      while self.running:
          pygame.event.pump()
          self.vjoy.pump()
          time.sleep(.01)
       return
 
    def pump(self):
+      self.running = True
       self.thread = threading.Thread(target = self.pump_loop)
       self.thread.daemon = True
       self.thread.start()
