@@ -43,18 +43,18 @@ class JoystickManager:
       self.pygame = pygame
       self.pygame.init()
       self.running = False
-      self.mappings = dict( [(id, dict()) for id in range(1, self.__max_vJoysticks+1)] )
+      self.mappings = dict()
 
       # Initialize vJoy
       self.vjoy = vJoy()
       for id in range(1, self.__max_vJoysticks+1):
          self.vjoy.acquire_device(id)
 
-      self.joysticks = dict()
-      self.num_joysticks = pygame.joystick.get_count()
-      for id in range(0, self.num_joysticks):
-         self.joysticks[id] = pygame.joystick.Joystick(id)
-         self.joysticks[id].init()
+      self.pygame_joysticks = dict()
+      self.num_pygame_joysticks = pygame.joystick.get_count()
+      for id in range(0, self.num_pygame_joysticks):
+         self.pygame_joysticks[id] = pygame.joystick.Joystick(id)
+         self.pygame_joysticks[id].init()
       return
 
    def add_map(self, vjoy_id, vjoy_component, vjoy_component_id, pygame_id, pygame_component, pygame_component_id, mapping_func):
@@ -71,7 +71,7 @@ class JoystickManager:
    def run_map(self, vjoy_id, vjoy_component, vjoy_component_id, pygame_id, pygame_component, pygame_component_id, mapping_func):
       vJoystick = self.get_vJoystick(vjoy_id)
       if pygame_component == pygameJoyComponent.axis:
-         pygame_value = self.joysticks[pygame_id].get_axis(pygame_component_id)
+         pygame_value = self.pygame_joysticks[pygame_id].get_axis(pygame_component_id)
          pygame_value = mapping_func(pygame_value)
       else:
          return False
@@ -86,13 +86,13 @@ class JoystickManager:
       return
 
    def get_vJoystick(self, id):
-      return self.vjoy.get_device(id)
+      return self.vjoy.vjoy_devices[id]
 
    def get_vJoysticks(self):
-      return self.vjoy._devices
+      return self.vjoy.vjoy_devices
 
-   def get_joysticks(self):
-      return self.joysticks
+   def get_pygame_joysticks(self):
+      return self.pygame_joysticks
 
    def pump(self):
       while self.running:

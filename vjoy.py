@@ -18,78 +18,78 @@ VjoyStatus = [
 
 
 class vJoy:
-   _vJoyInterface = None
-   _devices = dict()
+   __vJoyInterface = None
+   vjoy_devices = dict()
 
    def __init__(self):
       # Setup interface to the vJoy library
-      if self._vJoyInterface is None:
+      if self.__vJoyInterface is None:
          try:
-            self._vJoyInterface = cdll.LoadLibrary(os.path.join('c:\\Program Files\\vJoy', 'vJoyInterface'))
+            self.__vJoyInterface = cdll.LoadLibrary(os.path.join('c:\\Program Files\\vJoy', 'vJoyInterface'))
          except OSError:
             pass
 
-      if self._vJoyInterface is None:
+      if self.__vJoyInterface is None:
          try:
-            self._vJoyInterface = cdll.LoadLibrary(os.path.join('c:\\Program Files(x86)\\vJoy', 'vJoyInterface'))
+            self.__vJoyInterface = cdll.LoadLibrary(os.path.join('c:\\Program Files(x86)\\vJoy', 'vJoyInterface'))
          except OSError:
             pass
 
-      if self._vJoyInterface is None:
+      if self.__vJoyInterface is None:
          try:
-            self._vJoyInterface = cdll.LoadLibrary(os.path.join(os.path.dirname(__file__), 'vJoyInterface'))
+            self.__vJoyInterface = cdll.LoadLibrary(os.path.join(os.path.dirname(__file__), 'vJoyInterface'))
          except OSError:
             pass
 
-      if self._vJoyInterface is None:
+      if self.__vJoyInterface is None:
          raise vJoyError('Failed to load the vJoy library(dll) file')
 
       # Check if a vJoy device is present
-      if not self._vJoyInterface.vJoyEnabled():
+      if not self.__vJoyInterface.vJoyEnabled():
          raise  vJoyError('No vJoy device(s) enabled')
       else:
-         self.product = cast(self._vJoyInterface.GetvJoyProductString(), c_wchar_p).value
-         self.manufacturer = cast(self._vJoyInterface.GetvJoyManufacturerString(), c_wchar_p).value
-         self.serial = cast(self._vJoyInterface.GetvJoySerialNumberString(), c_wchar_p).value
+         self.product = cast(self.__vJoyInterface.GetvJoyProductString(), c_wchar_p).value
+         self.manufacturer = cast(self.__vJoyInterface.GetvJoyManufacturerString(), c_wchar_p).value
+         self.serial = cast(self.__vJoyInterface.GetvJoySerialNumberString(), c_wchar_p).value
 
-      self.vjoy_devices = dict()
+      self.vjoyvjoy_devices = dict()
       return
 
    def __len__(self):
-      return len(self._devices)
+      return len(self.vjoy_devices)
 
    def __iter__(self):
-      return self._devices.__iter__()
+      return self.vjoy_devices.__iter__()
 
    def __getitem__(self, id):
-      return self._devices[id]
+      return self.vjoy_devices[id]
 
    def quit(self):
-      for id in self._devices.keys():
+      for id in self.vjoy_devices.keys():
          self.relinquish_device(id)
       return
 
    def pump(self):
-      for _, device in self._devices.items():
+      for _, device in self.vjoy_devices.items():
          device.update()
       return
 
    def get_device(self, id):
-      return self._devices.get(id, None)
+      return self.vjoy_devices.get(id, None)
 
    def acquire_device(self, id):
       #VJOYINTERFACE_API BOOL		__cdecl	AcquireVJD(UINT rID);				// Acquire the specified vJoy Device.
       #vjoy_id = c_int(id)
-      status = self._vJoyInterface.GetVJDStatus(id)
+      status = self.__vJoyInterface.GetVJDStatus(id)
       if VjoyStatus[status] == 'VJD_STAT_FREE':
-         if self._vJoyInterface.AcquireVJD(id):
-            self._devices[id] = vJoyDevice(self._vJoyInterface, id)
-      return self._devices.get(id, None)
+         if self.__vJoyInterface.AcquireVJD(id):
+            self.vjoy_devices[id] = vJoyDevice(self.__vJoyInterface, id)
+      return self.vjoy_devices.get(id, None)
 
    def relinquish_device(self, id):
-      if id in self._devices:
-         self._devices.pop(id)
-      self._vJoyInterface.RelinquishVJD(id)
+      if id in self.vjoy_devices:
+         self.vjoy_devices.pop(id)
+      self.__vJoyInterface.RelinquishVJD(id)
 
 
 if __name__ == '__main__':

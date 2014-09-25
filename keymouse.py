@@ -1,12 +1,9 @@
 import uuid
 import ctypes
 import threading
-import multiprocessing
 
 import pythoncom
 import pyHook
-
-import Tkinter
 
 
 class KeyMouseManager:
@@ -14,73 +11,74 @@ class KeyMouseManager:
       self.keys_down = set()
       self.hotkeys = dict()
       self.key_sets = dict()
+      self.mappings = dict()
 
       # Create a hook manager
       self._hook_manager = pyHook.HookManager()
 
       # Setup listeners for key down and key up events
-      self._hook_manager.KeyDown = self._on_key_down
-      self._hook_manager.KeyUp = self._on_key_up
+      self._hook_manager.KeyDown = self.on_key_down
+      self._hook_manager.KeyUp = self.on_key_up
 
       # Set the keyboard hook
       self._hook_manager.HookKeyboard()
       return
 
-   def getkeys_down(self):
+   def get_keys_down(self):
       return self.keys_down.copy()
 
-   def _on_key_down(self, event):
+   def on_key_down(self, event):
       self.keys_down.add(ID2Key[event.KeyID])
 
-      for hotkey in self.hotkeys.values():
-         # Ignore on up hotkeys
-         if hotkey.on_up:
-            continue
-         elif hotkey.match(self.keys_down):
-            hotkey.run()
-         elif self.hotkey_in_keyset(hotkey):
-            hotkey.run()
+      for hotkey_list in self.hotkeys.values():
+         for hotkey in hotkey_list:
+            # Ignore on up hotkeys
+            if hotkey.on_up:
+               continue
+            elif hotkey.match(self.keys_down):
+               hotkey.run()
+            elif self.hotkey_inkeyset(hotkey):
+               hotkey.run()
+
       return True
 
-   def _on_key_up(self, event):
+   def on_key_up(self, event):
       key_up = ID2Key[event.KeyID]
       key_up_set = frozenset(key_up)
 
-      for hotkey in self.hotkeys.values():
-         # Ignore on down hotkeys
-         if not hotkey.on_up:
-            continue
-         # If its an up key 
-         # AND it matches what was pushed
-         # AND the key being released is a subset of the set, run the hotkey
-         elif hotkey.match(self.keys_down) and key_up_set.issubset(hotkey._keys):
-            hotkey.run()
-         elif self.hotkey_in_keyset(hotkey) and not hotkey.issubset(self.keys_down - key_up_set):
-            hotkey.run()
+      for hotkey_list in self.hotkeys.values():
+         for hotkey in hotkey_list:
+            # Ignore on down hotkeys
+            if not hotkey.on_up:
+               continue
+            # If its an up key 
+            # AND it matches what was pushed
+            # AND the key being released is a subset of the set, run the hotkey
+            elif hotkey.match(self.keys_down) and key_up_set.issubset(hotkey.keys):
+               hotkey.run()
+            elif self.hotkey_inkeyset(hotkey) and not hotkey.issubset(self.keys_down - key_up_set):
+               hotkey.run()
+
       self.keys_down.remove(key_up)
       return True
       
-   def hotkey_in_keyset(self, hotkey):
+   def hotkey_inkeyset(self, hotkey):
       if hotkey.key_set is not None:
          if hotkey.issubset(self.keys_down):
-            free_keys = self.keys_down
+            freekeys = self.keys_down
             for key in self.key_sets[hotkey.key_set]:
-               free_keys = free_keys - key
-            if len(free_keys) == 0:
+               freekeys = freekeys - key
+            if len(freekeys) == 0:
                return True
       return False
 
-   def add_hotkey(self, keys, func, on_up = False, **kwargs):
+   def add_hotkey(self, vjoy_tuple, keys, func, on_up = False, key_set = None):
       id = uuid.uuid4().hex
-      hotkey = HotKey(keys, func, on_up, **kwargs)
-      self.hotkeys[id] = hotkey
+      hotkey = HotKey(keys, func, on_up, key_set)
+      self.hotkeys.setdefault(vjoy_tuple, list()).append(hotkey)
 
-      # 
-      if hotkey.key_set is not None:
-         # Check for existing key_set
-         if hotkey.key_set not in self.key_sets:
-            self.key_sets[hotkey.key_set] = set()
-         self.key_sets[hotkey.key_set].add(hotkey._keys)
+      if key_set is not None:
+         self.key_sets.setdefault(key_set, set()).add(hotkey.keys)
 
       return id
 
@@ -104,16 +102,16 @@ class KeyMouseManager:
 
 class HotKey:
    def __init__(self, keys, hotkey_func, on_up = False, key_set = None):
-      self._keys = frozenset(keys)
+      self.keys = frozenset(keys)
       self.key_set = key_set
       self.hotkey_func = hotkey_func
       self.on_up = on_up
       
    def match(self, keys):
-      return (self._keys == keys)
+      return (self.keys == keys)
       
    def issubset(self, keys):
-      return (self._keys.issubset(keys))
+      return (self.keys.issubset(keys))
 
    def run(self):
       thread = threading.Thread(target = self.hotkey_func)
@@ -122,7 +120,7 @@ class HotKey:
       return
       
    def __repr__(self):
-      return '%s' % self._keys
+      return '%s' % self.keys
 
 
 ID2Key = {
