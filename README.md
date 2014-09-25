@@ -1,11 +1,13 @@
 pyremapper
 ==========
 
-Python based joystick remapper
+Python based joystick remapper. Double click joystick_remapperr.pyw to start the program.
 
-Requires
+Requires the following installables. Has been tested with x86 python.
 
-vJoy v2.x. You can get vJoy here http://vjoystick.sourceforge.net/site/
+Python 2.7.x You can get python here https://www.python.org/downloads/.
+
+vJoy v2.x You can get vJoy here http://vjoystick.sourceforge.net/site/
 
 pygame 1.9.x You can get pygame here http://www.pygame.org/download.shtml
 

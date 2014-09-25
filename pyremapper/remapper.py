@@ -13,13 +13,13 @@ from tools import *
 class Remapper(Tkinter.Tk):
    PUMP_DELAY = 10
 
-   def __init__(self, parent = None, mappings = None):
+   def __init__(self, parent = None, mapping_functions = None):
       #TK setup
       Tkinter.Tk.__init__(self, parent)
       self.parent = parent
       self.title('Joystick Remapper')
 
-      self.mappings = mappings
+      self.mapping_functions = mapping_functions
       self.key_mouse_manager = KeyMouseManager()
       self.joystick_manager = JoystickManager()
       self.joystick_manager.start()
