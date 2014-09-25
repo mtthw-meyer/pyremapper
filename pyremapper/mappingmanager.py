@@ -1,16 +1,19 @@
+import tkFileDialog
 import cPickle
 
 
 class MappingManager(object):
-   INI_FILE = 'pyremapper.ini'
-   FIELDS = ('type')
-
-   def __init__(self, joystick_manager, keymouse_manager, functions = None):
+   def __init__(self, keymouse_manager, joystick_manager):
       self.joystick_manager = joystick_manager
       self.keymouse_manager = keymouse_manager
       return
 
-   def load(self, file_name):
+   def load(self, file_name = None):
+      if file_name is None:
+         file_name = tkFileDialog.askopenfilename()
+         if file_name is '':
+            return
+
       f = open(file_name, 'rb')
       data = cPickle.load(f)
       self.keymouse_manager.hotkeys = data.get(('keyboard_manager', 'hotkeys'), dict())
@@ -19,7 +22,12 @@ class MappingManager(object):
       f.close()
       return
 
-   def save(self, file_name):
+   def save(self, file_name = None):
+      if file_name is None:
+         file_name = tkFileDialog.asksaveasfilename()
+         if file_name is '':
+            return
+
       f = open(file_name, 'wb')
       data = {
          ('keyboard_manager', 'hotkeys'): self.keymouse_manager.hotkeys,

@@ -5,9 +5,7 @@ import time
 from dialog import *
 from joystick import vJoyComponent
 from joystick import pygameJoyComponent
-
-DISABLE = ('disabled',)
-ENABLE = ('!disabled',)
+from utils import *
 
 
 class JoystickFrame(ttk.Frame):
@@ -36,12 +34,30 @@ class JoystickFrame(ttk.Frame):
          # Create the frame for the axis
          axis_frame = ttk.LabelFrame(self, text = 'Axis %s' % axis_number, width = 400)
          axis_frame.pack(side = 'top')#grid(row = axis_number, column = 1)
+         
 
          # Select input type
+         
+         self.input_select_radios(axis_frame, axis_variables)
          self.keyboard_options(axis_frame, axis_variables, axis)
          self.joystick_options(axis_frame, axis_variables, axis)
-         self.mouse_options(   axis_frame, axis_variables)
+         self.mouse_options_frame = self.mouse_options(axis_frame, axis_variables)
+         self.mouse_options_frame
 
+      return
+      
+   def input_select_radios(self, axis_frame, variables):
+      radio_frame = ttk.Frame(axis_frame)
+      radio_frame.grid(row = 1, column = 1)
+
+      radio_none = ttk.Radiobutton(radio_frame, text = 'None', variable = variables['input_type_radio'], value = 'none')
+      radio_none.grid(row = 1, column = 1, stick='W')
+      radio_keyboard = ttk.Radiobutton(radio_frame, text = 'Keyboard/Button', variable = variables['input_type_radio'], value = 'keyboard')
+      radio_keyboard.grid(row = 2, column = 1, stick='W')
+      radio_joystick = ttk.Radiobutton(radio_frame, text = 'Joystick', variable = variables['input_type_radio'], value = 'joystick')
+      radio_joystick.grid(row = 3, column = 1, stick='W')
+      radio_mouse = ttk.Radiobutton(radio_frame, text = 'Mouse', variable = variables['input_type_radio'], value = 'mouse', state = DISABLE)
+      radio_mouse.grid(row = 4, column = 1, stick='W')
       return
 
    def bind_button_callback(self, widget, tk_var, vjoy_id, vjoy_comp, vjoy_axis):
@@ -58,18 +74,16 @@ class JoystickFrame(ttk.Frame):
       return
 
    def keyboard_options(self, parent, variables, vjoy_axis):
-      radio = ttk.Radiobutton(parent, text = 'Keyboard/Button', variable = variables['input_type_radio'], value = 'keyboard')
-      radio.grid(row = 1 , column = 1)
       keyboard_options_frame = ttk.LabelFrame(parent)
-      keyboard_options_frame.grid(row = 2, column = 1, stick='N')
+      keyboard_options_frame.grid(row = 1, column = 2, stick='N')
 
       # Create input binds
-      for binding_number in range(3):
+      for binding_number in range(2):
          # Bind frame
          option_frame = ttk.Frame(keyboard_options_frame)
          option_frame.grid(row = binding_number + 2, column = 1, columnspan = 5, stick='W', padx = 20)
          # Bind label
-         bound_button_widget = ttk.Label(option_frame, text = 'N/A')
+         bound_button_widget = ttk.Label(option_frame, text = 'N/A', width=25)
          bound_button_widget.pack(side = 'left')
          # Create a button widget and bind it to bind_button_callback
          # This will configure the label text and setup the hotkey
@@ -117,18 +131,15 @@ class JoystickFrame(ttk.Frame):
          return
 
       auto_center_checkbutton_var.trace('w', auto_center_changed_callback)
-      
+
       checkbutton.pack(side = 'left')
       entry.pack(side = 'left')
       return keyboard_options_frame
 
    def joystick_options(self, parent, variables, vjoy_axis):
-      radio = ttk.Radiobutton(parent, text = 'Joystick', variable = variables['input_type_radio'], value = 'joystick')
-      radio.grid(row = 1 , column = 2)
       # Create the joystick options frame
       joystick_options_frame = ttk.LabelFrame(parent)
-      joystick_options_frame.grid(row = 2, column = 2, stick='N')
-      
+      joystick_options_frame.grid(row = 1, column = 3, stick='N')
 
       option_frame = ttk.Frame(joystick_options_frame)
       option_frame.grid(row = 2, column = 1, columnspan = 5, stick='W', padx = 20)
@@ -151,7 +162,7 @@ class JoystickFrame(ttk.Frame):
          joy_axis_widget.configure( values = range(joystick.get_numaxes()) )
          return
       variables['joystick_id'].trace('w', joystick_id_changed_callback)
-      
+
       def joystick_axis_changed_callback(*args):
          self.joystick_manager.add_map(
             self.vJoystick.id,
@@ -171,11 +182,8 @@ class JoystickFrame(ttk.Frame):
       return joystick_options_frame
 
    def mouse_options(self, parent, variables):
-      radio = ttk.Radiobutton(parent, text = 'Mouse', variable = variables['input_type_radio'], value = 'mouse')
-      radio.grid(row = 1 , column = 3)
       mouse_options_frame = ttk.LabelFrame(parent)
-      mouse_options_frame.grid(row = 2, column = 3, stick='N')
-      
+      mouse_options_frame.grid(row = 1, column = 4, stick='N')
 
       option_frame = ttk.Frame(mouse_options_frame)
       option_frame.grid(row = 2, column = 1, columnspan = 5, stick='W', padx = 20)

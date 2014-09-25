@@ -1,40 +1,52 @@
 import Tkinter
 import ttk
 import time
-import threading
 import multiprocessing
 
 from joystick import *
 from keymouse import *
 from frames import *
+from mappingmanager import MappingManager
 from tools import *
 
 
 class Remapper(Tkinter.Tk):
    PUMP_DELAY = 10
 
-   def __init__(self, parent = None, mapping_functions = None):
+   def __init__(self, parent = None, settings = 'joystick_remapper.ini', mapping_functions = None):
       #TK setup
       Tkinter.Tk.__init__(self, parent)
       self.parent = parent
       self.title('Joystick Remapper')
+
+      self.settings = settings
 
       self.mapping_functions = mapping_functions
       self.key_mouse_manager = KeyMouseManager()
       self.joystick_manager = JoystickManager()
       self.joystick_manager.start()
       self.key_mouse_daemon = None
+      
+      self.mapping_manager = MappingManager(self.key_mouse_manager, self.joystick_manager)
 
+      self.load()
       self.initialize()
       return
 
-   def destroy(self):
-      self.joystick_manager.quit()
-      if self.key_mouse_daemon is not None:
-         self.key_mouse_daemon.terminate()
-         self.key_mouse_daemon.join()
-      Tkinter.Tk.destroy(self)
+   def load(self):
+      try:
+         f = open(self.settings, 'r')
+         for line in f.readlines():
+            pass
+         f.close()
+      except IOError:
+         print 'No settings file found, using default settings'
       return
+
+   def save(self):
+      f = open(self.settings, 'w')
+      # Write stuff
+      f.close()
 
    def initialize(self):
       self.create_menubar()
@@ -53,6 +65,9 @@ class Remapper(Tkinter.Tk):
 
       # File menu
       file_menu = Tkinter.Menu(self, tearoff = 0)
+      file_menu.add_command(label = 'Load', command = self.mapping_manager.load)
+      file_menu.add_command(label = 'Save', command = self.mapping_manager.save)
+      file_menu.add_command(label = 'Clear all', command = self.clear)
       file_menu.add_command(label = 'Quit', command = self.destroy)
       self.menu.add_cascade(label = 'File', menu = file_menu)
 
@@ -65,6 +80,13 @@ class Remapper(Tkinter.Tk):
 
       # Display the menu
       self.config(menu = self.menu)
+      
+   def ask_open(self):
+      file_name = tkFileDialog.askopenfilename()
+      self.load(file_name)
+      
+   def clear(self):
+      pass
 
    def update_me(self):
       while not self.has_focus:
@@ -76,6 +98,14 @@ class Remapper(Tkinter.Tk):
       self.key_mouse_daemon = multiprocessing.Process(target = self.key_mouse_manager.pump)
       self.key_mouse_daemon.start()
       self.mainloop()
+      return
+
+   def destroy(self):
+      self.joystick_manager.quit()
+      if self.key_mouse_daemon is not None:
+         self.key_mouse_daemon.terminate()
+         self.key_mouse_daemon.join()
+      Tkinter.Tk.destroy(self)
       return
 
 
