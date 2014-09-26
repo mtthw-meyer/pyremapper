@@ -6,8 +6,9 @@ import pythoncom
 import pyHook
 
 
-class KeyMouseManager:
-   def __init__(self):
+class KeyMouseManager(object):
+   def __init__(self, joystick_manager):
+      self.joystick_manager = joystick_manager
       self.keys_down = set()
       self.hotkeys = dict()
       self.key_sets = dict()
@@ -36,9 +37,11 @@ class KeyMouseManager:
             if hotkey.on_up:
                continue
             elif hotkey.match(self.keys_down):
-               hotkey.run()
+               args = hotkey.vjoy_tuple + (hotkey.value,)
+               self.joystick_manager.set_component_value(*args)
             elif self.hotkey_inkeyset(hotkey):
-               hotkey.run()
+               args = hotkey.vjoy_tuple + (hotkey.value,)
+               self.joystick_manager.set_component_value(*args)
 
       return True
 
@@ -55,11 +58,14 @@ class KeyMouseManager:
             # AND it matches what was pushed
             # AND the key being released is a subset of the set, run the hotkey
             elif hotkey.match(self.keys_down) and key_up_set.issubset(hotkey.keys):
-               hotkey.run()
+               args = hotkey.vjoy_tuple + (hotkey.value,)
+               self.joystick_manager.set_component_value(*args)
             elif self.hotkey_inkeyset(hotkey) and not hotkey.issubset(self.keys_down - key_up_set):
-               hotkey.run()
+               args = hotkey.vjoy_tuple + (hotkey.value,)
+               self.joystick_manager.set_component_value(*args)
 
-      self.keys_down.remove(key_up)
+      if key_up in self.keys_down:
+         self.keys_down.remove(key_up)
       return True
       
    def hotkey_inkeyset(self, hotkey):
@@ -72,19 +78,18 @@ class KeyMouseManager:
                return True
       return False
 
-   def add_hotkey(self, vjoy_tuple, keys, func, on_up = False, key_set = None):
-      id = uuid.uuid4().hex
-      hotkey = HotKey(keys, func, on_up, key_set)
+   def add_hotkey(self, vjoy_tuple, value, keys, on_up = False, key_set = None):
+      hotkey = Hotkey(keys, vjoy_tuple, value, on_up, key_set)
       self.hotkeys.setdefault(vjoy_tuple, list()).append(hotkey)
 
       if key_set is not None:
          self.key_sets.setdefault(key_set, set()).add(hotkey.keys)
 
-      return id
+      return vjoy_tuple
 
-   def remove_hotkey(self, id):
-      if id in self.hotkeys:
-         self.hotkeys.pop(id)
+   def remove_hotkey(self, vjoy_tuple):
+      if vjoy_tuple in self.hotkeys:
+         self.hotkeys.pop(vjoy_tuple)
          return True
       return False
    
@@ -100,27 +105,20 @@ class KeyMouseManager:
       ctypes.windll.user32.PostQuitMessage(0)
 
 
-class HotKey:
-   def __init__(self, keys, hotkey_func, on_up = False, key_set = None):
+class Hotkey(object):
+   def __init__(self, keys, vjoy_tuple, value, on_up, key_set):
       self.keys = frozenset(keys)
-      self.key_set = key_set
-      self.hotkey_func = hotkey_func
+      self.vjoy_tuple = vjoy_tuple
+      self.value = value
       self.on_up = on_up
-      
+      self.key_set = key_set
+      return
+
    def match(self, keys):
       return (self.keys == keys)
-      
+
    def issubset(self, keys):
       return (self.keys.issubset(keys))
-
-   def run(self):
-      thread = threading.Thread(target = self.hotkey_func)
-      thread.daemon = True
-      thread.start()
-      return
-      
-   def __repr__(self):
-      return '%s' % self.keys
 
 
 ID2Key = {

@@ -1,5 +1,5 @@
 import tkFileDialog
-import cPickle
+import pickle
 
 
 class MappingManager(object):
@@ -8,32 +8,34 @@ class MappingManager(object):
       self.keymouse_manager = keymouse_manager
       return
 
-   def load(self, file_name = None):
-      if file_name is None:
-         file_name = tkFileDialog.askopenfilename()
-         if file_name is '':
+   def load(self, filename = None):
+      if filename is None:
+         filename = tkFileDialog.askopenfilename()
+         if filename is '':
             return
 
-      f = open(file_name, 'rb')
-      data = cPickle.load(f)
-      self.keymouse_manager.hotkeys = data.get(('keyboard_manager', 'hotkeys'), dict())
-      self.keymouse_manager.key_sets = data.get(('keyboard_manager', 'key_sets'), dict())
-      self.joystick_manage.mappings = data.get(('joystick_manager', 'mappings'), dict())
+      f = open(filename, 'rb')
+      data = pickle.load(f)
+      print data
+      self.keymouse_manager.hotkeys = data.get(('keymouse_manager_hotkeys'), dict())
+      self.keymouse_manager.key_sets = data.get(('keymouse_manager_key_sets'), dict())
+      self.joystick_manager.mappings = data.get(('joystick_manager_mappings'), dict())
       f.close()
       return
 
-   def save(self, file_name = None):
-      if file_name is None:
-         file_name = tkFileDialog.asksaveasfilename()
-         if file_name is '':
+   def save(self, filename = None):
+      if filename is None:
+         filename = tkFileDialog.asksaveasfilename()
+         if filename is '':
             return
 
-      f = open(file_name, 'wb')
+      f = open(filename, 'wb')
       data = {
-         ('keyboard_manager', 'hotkeys'): self.keymouse_manager.hotkeys,
-         ('keyboard_manager', 'key_sets'): self.keymouse_manager.key_sets,
-         ('joystick_manager', 'mappings'): self.joystick_manage.mappings,
+         ('keymouse_manager_hotkeys'): self.keymouse_manager.hotkeys,
+         ('keymouse_manager_key_sets'): self.keymouse_manager.key_sets,
+         ('joystick_manager_mappings'): self.joystick_manager.mappings,
       }
-      cPickle.dump(data, f, -1)
+      print data
+      pickle.dump(data, f, -1)
       f.close()
       return

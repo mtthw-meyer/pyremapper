@@ -18,7 +18,6 @@ class JoystickFrame(ttk.Frame):
 
       self.vJoystick = vJoystick
       self.joystick_manager = joystick_manager
-      self.pygame_joysticks = joystick_manager.get_pygame_joysticks()
       self.keyboard_manager = keyboard_manager
       
       for axis, data in vJoystick.axes.items():
@@ -122,7 +121,7 @@ class JoystickFrame(ttk.Frame):
       # Joystick ID
       ttk.Label(option_frame, text = 'Joy ID').pack(side = 'left')
       # Get the list of joystick names
-      joystick_names  = ['%i - %s' % (joy.get_id(), joy.get_name()) for joy in self.pygame_joysticks.values()]
+      joystick_names  = ['%i - %s' % (joy.get_id(), joy.get_name()) for joy in self.joystick_manager.pygame_joysticks.values()]
       # Joystick ID widget
       joy_id_widget = ttk.Combobox(option_frame, width = 20, values = joystick_names, textvariable = variables['joystick_id'])
       joy_id_widget.pack(side = 'left')
@@ -179,12 +178,7 @@ class JoystickFrame(ttk.Frame):
       text = [ i for i in keys_down ]
       widget.configure(text = text)
       value = float(tk_var.get())
-      args = vjoy_tuple + (value,)
-      self.keyboard_manager.add_hotkey(
-         vjoy_tuple,
-         keys_down,
-         lambda: self.joystick_manager.set_component_value(*args)
-      )
+      self.keyboard_manager.add_hotkey(vjoy_tuple, value, keys_down)
       return
 
 
@@ -198,7 +192,7 @@ class JoystickFrame(ttk.Frame):
    def joystick_id_changed_callback(self, id_widget, axis_widget, *_):
       value = id_widget.current()
       axis_widget.state(ENABLE)
-      joystick = self.pygame_joysticks[value]
+      joystick = self.joystick_manager.pygame_joysticks[value]
       axis_widget.configure( values = range(joystick.get_numaxes()) )
       return
 

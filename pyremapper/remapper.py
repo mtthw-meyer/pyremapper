@@ -2,6 +2,7 @@ import Tkinter
 import ttk
 import time
 import multiprocessing
+import pythoncom
 
 from joystick import *
 from keymouse import *
@@ -20,11 +21,11 @@ class Remapper(Tkinter.Tk):
       self.title('Joystick Remapper')
 
       self.settings = settings
-
       self.mapping_functions = mapping_functions
-      self.key_mouse_manager = KeyMouseManager()
+
       self.joystick_manager = JoystickManager()
       self.joystick_manager.start()
+      self.key_mouse_manager = KeyMouseManager(self.joystick_manager)
       self.key_mouse_daemon = None
       
       self.mapping_manager = MappingManager(self.key_mouse_manager, self.joystick_manager)
@@ -66,7 +67,7 @@ class Remapper(Tkinter.Tk):
       file_menu = Tkinter.Menu(self, tearoff = 0)
       file_menu.add_command(label = 'Load', command = self.mapping_manager.load)
       file_menu.add_command(label = 'Save', command = self.mapping_manager.save)
-      file_menu.add_command(label = 'Clear all', command = self.clear)
+      file_menu.add_command(label = 'Clear all', command = lambda: self.key_mouse_daemon.terminate())
       file_menu.add_command(label = 'Quit', command = self.destroy)
       self.menu.add_cascade(label = 'File', menu = file_menu)
 
@@ -94,7 +95,7 @@ class Remapper(Tkinter.Tk):
       return
 
    def start(self):
-      self.key_mouse_daemon = multiprocessing.Process(target = self.key_mouse_manager.pump)
+      self.key_mouse_daemon = multiprocessing.Process(target = pythoncom.PumpMessages)
       self.key_mouse_daemon.start()
       self.mainloop()
       return
