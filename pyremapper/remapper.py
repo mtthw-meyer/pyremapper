@@ -29,7 +29,6 @@ class Remapper(Tkinter.Tk):
       
       self.mapping_manager = MappingManager(self.key_mouse_manager, self.joystick_manager)
 
-      self.load()
       self.initialize()
       return
 
@@ -51,8 +50,8 @@ class Remapper(Tkinter.Tk):
    def initialize(self):
       self.create_menubar()
 
-      self.notebook = ttk.Notebook(self, height=1024, width=1024)
-      self.notebook.pack()
+      self.notebook = ttk.Notebook(self)
+      self.notebook.pack(fill='both', expand='yes', padx=5, pady=5)
       # For each vJoystick create a tab
       for vJoy_id, vJoystick in self.joystick_manager.get_vJoysticks().items():
          frame = JoystickFrame(vJoystick, self.joystick_manager, self.key_mouse_manager, self)
