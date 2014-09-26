@@ -1,6 +1,7 @@
 import Tkinter
 import ttk
 import time
+import functools
 
 from dialog import *
 from joystick import vJoyComponent
@@ -41,7 +42,8 @@ class JoystickFrame(ttk.Frame):
          self.joystick_options(axis_frame, axis_variables, axis)
          self.mouse_options(axis_frame, axis_variables)
 
-         axis_variables['input_type_radio'].trace('w', lambda x,y,z, axis_number=axis_number: self.input_type_radio_changed_callback(axis_number, x,y,z))
+         radio_callback = functools.partial(self.input_type_radio_changed_callback, axis_number)
+         axis_variables['input_type_radio'].trace('w', radio_callback)
          axis_variables['input_type_radio'].set('none')
 
       return
@@ -50,6 +52,7 @@ class JoystickFrame(ttk.Frame):
       radio_frame = ttk.Frame(parent)
       radio_frame.grid(row = 1, column = 1)
 
+      # Create radio buttons
       radio_none = ttk.Radiobutton(radio_frame, text = 'None', variable = variables['input_type_radio'], value = 'none')
       radio_none.grid(row = 1, column = 1, stick='W')
       radio_keyboard = ttk.Radiobutton(radio_frame, text = 'Keyboard/Button', variable = variables['input_type_radio'], value = 'keyboard')
@@ -59,28 +62,6 @@ class JoystickFrame(ttk.Frame):
       radio_mouse = ttk.Radiobutton(radio_frame, text = 'Mouse', variable = variables['input_type_radio'], value = 'mouse', state = DISABLE)
       radio_mouse.grid(row = 4, column = 1, stick='W')
       return radio_frame
-      
-   def input_type_radio_changed_callback(self, axis_number, *args):
-      value = self.tk_variables[axis_number]['input_type_radio'].get()
-      for name, widget in self.tk_variables[axis_number]['frames'].items():
-         if value == name:
-            set_state_recursive(widget, ENABLE)
-         else:
-            set_state_recursive(widget, DISABLE)
-      return
-
-   def bind_button_callback(self, widget, tk_var, vjoy_id, vjoy_comp, vjoy_axis):
-      binder = Binder(self.parent, self.keyboard_manager)
-      keys_down = binder.value
-      vjoy_tuple = (vjoy_id, vjoy_comp, vjoy_axis)
-      text = [ i for i in keys_down ]
-      widget.configure(text = text)
-      self.keyboard_manager.add_hotkey(
-         vjoy_tuple,
-         keys_down,
-         lambda: self.vJoystick.set_axis(vjoy_axis, float(tk_var.get()))
-      )
-      return
 
    def keyboard_options(self, parent, variables, vjoy_axis):
       keyboard_options_frame = ttk.LabelFrame(parent)
@@ -99,21 +80,10 @@ class JoystickFrame(ttk.Frame):
          # This will configure the label text and setup the hotkey
          entry_var = Tkinter.StringVar()
          variables['entry_%i' % binding_number] = entry_var
-         button_widget = ttk.Button(
-            option_frame,
-            text = 'Bind',
-            command = lambda
-               entry_var = entry_var,
-               widget = bound_button_widget,
-               vjoy_axis = vjoy_axis:
-               self.bind_button_callback(
-                  widget,
-                  entry_var,
-                  self.vJoystick.id,
-                  vJoyComponent.axis,
-                  vjoy_axis
-               )
-         ).pack(side = 'left')
+         
+         bind_callback = functools.partial(self.bind_button_callback, bound_button_widget, entry_var, self.vJoystick.id, vJoyComponent.axis, vjoy_axis)
+         button_widget = ttk.Button( option_frame, text = 'Bind', command = bind_callback )
+         button_widget.pack(side = 'left')
          # Label and entry for value
          ttk.Label(option_frame, text = 'Value').pack(side = 'left')
          ttk.Entry(option_frame, width = 7, textvariable = entry_var).pack(side = 'left')
@@ -133,17 +103,12 @@ class JoystickFrame(ttk.Frame):
       auto_center_entry_var = Tkinter.StringVar()
       variables['auto_center_entry_var'] = auto_center_entry_var
       entry = ttk.Entry(auto_center_frame, state = DISABLE, width = 5, textvariable = auto_center_entry_var )
-
-      def auto_center_changed_callback(*args):
-         entry.state( ENABLE if auto_center_checkbutton_var.get() else DISABLE )
-         if not auto_center_entry_var.get():
-            auto_center_entry_var.set('0')
-         return
-
-      auto_center_checkbutton_var.trace('w', auto_center_changed_callback)
+      callback = functools.partial(self.auto_center_changed_callback, entry, auto_center_entry_var, auto_center_checkbutton_var)
+      auto_center_checkbutton_var.trace('w', callback)
 
       checkbutton.pack(side = 'left')
       entry.pack(side = 'left')
+
       return keyboard_options_frame
 
    def joystick_options(self, parent, variables, vjoy_axis):
@@ -166,26 +131,12 @@ class JoystickFrame(ttk.Frame):
       joy_axis_widget.pack(side = 'left')
 
       # Changed axes selection based on joystick ID
-      def joystick_id_changed_callback(*args):
-         value = joy_id_widget.current()
-         joy_axis_widget.state(ENABLE)
-         joystick = self.pygame_joysticks[value]
-         joy_axis_widget.configure( values = range(joystick.get_numaxes()) )
-         return
-      variables['joystick_id'].trace('w', joystick_id_changed_callback)
+      
+      id_callback = functools.partial(self.joystick_id_changed_callback, joy_id_widget, joy_axis_widget)
+      variables['joystick_id'].trace('w', id_callback)
 
-      def joystick_axis_changed_callback(*args):
-         self.joystick_manager.add_map(
-            self.vJoystick.id,
-            vJoyComponent.axis,
-            vjoy_axis,
-            joy_id_widget.current(),
-            pygameJoyComponent.axis,
-            joy_axis_widget.current(),
-            lambda x: x # Joysticks hard coded to linear
-         )
-         return
-      variables['joystick_axis'].trace('w', joystick_axis_changed_callback)
+      axis_callback = functools.partial(self.joystick_axis_changed_callback, vjoy_axis, joy_id_widget, joy_axis_widget)
+      variables['joystick_axis'].trace('w', axis_callback)
 
       # Mapping methods
       ttk.Label(option_frame, text = 'TODO: Mapping Method').pack(side = 'left')
@@ -204,3 +155,62 @@ class JoystickFrame(ttk.Frame):
       ttk.Combobox(option_frame, width = 5, values = ('', 'X', 'Y', 'Wheel')).pack(side = 'left')
 
       return mouse_options_frame
+
+
+###############################################################################
+################################# Call backs ##################################
+###############################################################################
+
+
+   def input_type_radio_changed_callback(self, axis_number, *_):
+      value = self.tk_variables[axis_number]['input_type_radio'].get()
+      for name, widget in self.tk_variables[axis_number]['frames'].items():
+         if value == name:
+            set_state_recursive(widget, ENABLE)
+         else:
+            set_state_recursive(widget, DISABLE)
+      return
+
+
+   def bind_button_callback(self, widget, tk_var, vjoy_id, vjoy_comp, vjoy_axis):
+      binder = Binder(self.parent, self.keyboard_manager)
+      keys_down = binder.value
+      vjoy_tuple = (vjoy_id, vjoy_comp, vjoy_axis)
+      text = [ i for i in keys_down ]
+      widget.configure(text = text)
+      value = float(tk_var.get())
+      args = vjoy_tuple + (value,)
+      self.keyboard_manager.add_hotkey(
+         vjoy_tuple,
+         keys_down,
+         lambda: self.joystick_manager.set_component_value(*args)
+      )
+      return
+
+
+   def auto_center_changed_callback(self, entry_widget, entry_var, checkbutton_var, *_):
+      entry_widget.state( ENABLE if checkbutton_var.get() else DISABLE )
+      if not entry_var.get():
+         entry_var.set('0')
+      return
+
+
+   def joystick_id_changed_callback(self, id_widget, axis_widget, *_):
+      value = id_widget.current()
+      axis_widget.state(ENABLE)
+      joystick = self.pygame_joysticks[value]
+      axis_widget.configure( values = range(joystick.get_numaxes()) )
+      return
+
+
+   def joystick_axis_changed_callback(self, vjoy_axis, id_widget, axis_widget, *_):
+      self.joystick_manager.add_map(
+         self.vJoystick.id,
+         vJoyComponent.axis,
+         vjoy_axis,
+         id_widget.current(),
+         pygameJoyComponent.axis,
+         axis_widget.current(),
+         lambda x: x # Joysticks hard coded to linear
+      )
+      return
