@@ -35,7 +35,7 @@ pygameJoyComponent = Enum([
 ])
 
 
-class JoystickManager:
+class JoystickManager(object):
    __max_vJoysticks = 8
 
    def __init__(self):
@@ -65,18 +65,22 @@ class JoystickManager:
    def remove_map(self, vjoy_id, vjoy_component, vjoy_component_id):
       vjoy_tuple = (vjoy_id, vjoy_component, vjoy_component_id)
       if vjoy_tuple in self.mappings:
-         self.mappings.pop((vjoy_id, vjoy_component, vjoy_component_id))
+         self.mappings.pop(vjoy_tuple)
       return
 
    def run_map(self, vjoy_id, vjoy_component, vjoy_component_id, pygame_id, pygame_component, pygame_component_id, mapping_func):
-      vJoystick = self.get_vJoystick(vjoy_id)
       if pygame_component == pygameJoyComponent.axis:
          pygame_value = self.pygame_joysticks[pygame_id].get_axis(pygame_component_id)
          pygame_value = mapping_func(pygame_value)
       else:
          return False
+      self.set_component_value(vjoy_id, vjoy_component, vjoy_component_id, pygame_value)
+      return
+
+   def set_component_value(self, vjoy_id, vjoy_component, vjoy_component_id, value):
+      vJoystick = self.get_vJoystick(vjoy_id)
       if vjoy_component == vJoyComponent.axis:
-         vJoystick.set_axis(vjoy_component_id, pygame_value)
+         vJoystick.set_axis(vjoy_component_id, value)
       return
 
    def quit(self):
