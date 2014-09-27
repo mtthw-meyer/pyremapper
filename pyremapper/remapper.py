@@ -1,13 +1,14 @@
 import Tkinter
 import ttk
+import tkFileDialog
 import time
 import multiprocessing
 import pythoncom
+import pickle
 
 from joystick import *
 from keymouse import *
 from frames import *
-from mappingmanager import MappingManager
 from tools import *
 
 
@@ -27,8 +28,6 @@ class Remapper(Tkinter.Tk):
       self.joystick_manager.start()
       self.key_mouse_manager = KeyMouseManager(self.joystick_manager)
       self.key_mouse_daemon = None
-      
-      self.mapping_manager = MappingManager(self.key_mouse_manager, self.joystick_manager)
 
       self.initialize()
       return
@@ -65,8 +64,9 @@ class Remapper(Tkinter.Tk):
 
       # File menu
       file_menu = Tkinter.Menu(self, tearoff = 0)
-      file_menu.add_command(label = 'Load', command = self.mapping_manager.load)
-      file_menu.add_command(label = 'Save', command = self.mapping_manager.save)
+      file_menu.add_command(label = 'Load', command = self.load_hotkeys)
+      file_menu.add_command(label = 'Save', command = self.save_hotkeys)
+      file_menu.add_command(label = 'Save as', command = self.save_hotkeys)
       file_menu.add_command(label = 'Clear all', command = lambda: self.key_mouse_daemon.terminate())
       file_menu.add_command(label = 'Quit', command = self.destroy)
       self.menu.add_cascade(label = 'File', menu = file_menu)
@@ -106,6 +106,36 @@ class Remapper(Tkinter.Tk):
          self.key_mouse_daemon.terminate()
          self.key_mouse_daemon.join()
       Tkinter.Tk.destroy(self)
+      return
+      
+   def load_hotkeys(self, filename = None):
+      if filename is None:
+         filename = tkFileDialog.askopenfilename()
+         if filename is '':
+            return
+
+      f = open(filename, 'rb')
+      data = pickle.load(f)
+      self.key_mouse_manager.hotkeys = data.get(('key_mouse_manager_hotkeys'), dict())
+      self.key_mouse_manager.key_sets = data.get(('key_mouse_manager_keysets'), dict())
+      self.joystick_manager.mappings = data.get(('joystick_manager_mappings'), dict())
+      f.close()
+      return
+
+   def save_hotkeys(self, filename = None):
+      if filename is None:
+         filename = tkFileDialog.asksaveasfilename()
+         if filename is '':
+            return
+
+      f = open(filename, 'wb')
+      data = {
+         ('key_mouse_manager_hotkeys'): self.key_mouse_manager.hotkeys,
+         ('key_mouse_manager_keysets'): self.key_mouse_manager.keysets,
+         ('joystick_manager_mappings'): self.joystick_manager.mappings,
+      }
+      pickle.dump(data, f, -1)
+      f.close()
       return
 
 

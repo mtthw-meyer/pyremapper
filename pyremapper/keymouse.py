@@ -11,7 +11,7 @@ class KeyMouseManager(object):
       self.joystick_manager = joystick_manager
       self.keys_down = set()
       self.hotkeys = dict()
-      self.key_sets = dict()
+      self.keysets = dict()
       self.mappings = dict()
 
       # Create a hook manager
@@ -72,7 +72,7 @@ class KeyMouseManager(object):
       if hotkey.key_set is not None:
          if hotkey.issubset(self.keys_down):
             freekeys = self.keys_down
-            for key in self.key_sets[hotkey.key_set]:
+            for key in self.keysets[hotkey.key_set]:
                freekeys = freekeys - key
             if len(freekeys) == 0:
                return True
@@ -83,7 +83,7 @@ class KeyMouseManager(object):
       self.hotkeys.setdefault(vjoy_tuple, list()).append(hotkey)
 
       if key_set is not None:
-         self.key_sets.setdefault(key_set, set()).add(hotkey.keys)
+         self.keysets.setdefault(key_set, set()).add(hotkey.keys)
 
       return vjoy_tuple
 
