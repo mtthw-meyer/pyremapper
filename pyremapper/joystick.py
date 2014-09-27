@@ -2,23 +2,7 @@ import threading
 import time
 import pygame
 from vjoy import *
-
-
-class Enum(object):
-   def __init__(self, items):
-      self.__items = items
-      self.__length = len(items)
-      self.__range = range(self.__length)
-      for item, value in zip(self.__items, self.__range):
-         setattr(self, item, value)
-      return
-
-   def __len__(self):
-      return self.__length
-
-   def __iter__(self):
-      return self.__range.__iter__()
-
+from enum import Enum
 
 vJoyComponent = Enum([
    'axis',
@@ -88,6 +72,9 @@ class JoystickManager(object):
       self.vjoy.quit()
       self.pygame.quit()
       return
+      
+   def get_axis_index(self, HID):
+      return (HID - 0x2F)
 
    def get_vJoystick(self, id):
       return self.vjoy.vjoy_devices[id]

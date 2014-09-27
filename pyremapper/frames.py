@@ -7,6 +7,7 @@ from dialog import *
 from joystick import vJoyComponent
 from joystick import pygameJoyComponent
 from utils import *
+from enum import Enum
 
 
 class JoystickFrame(ttk.Frame):
@@ -21,7 +22,7 @@ class JoystickFrame(ttk.Frame):
       self.keyboard_manager = keyboard_manager
       
       for axis, data in vJoystick.axes.items():
-         axis_number = (axis - 0x2F)
+         axis_number = self.joystick_manager.get_axis_index(axis)
          self.tk_variables[axis_number] = dict()
          axis_variables = self.tk_variables[axis_number]
 
@@ -75,6 +76,7 @@ class JoystickFrame(ttk.Frame):
          # Bind label
          bound_button_widget = ttk.Label(option_frame, text = 'N/A', width=25)
          bound_button_widget.pack(side = 'left')
+         variables['bound_button_widget_%i' % binding_number] = bound_button_widget
          # Create a button widget and bind it to bind_button_callback
          # This will configure the label text and setup the hotkey
          entry_var = Tkinter.StringVar()
@@ -133,9 +135,11 @@ class JoystickFrame(ttk.Frame):
       
       id_callback = functools.partial(self.joystick_id_changed_callback, joy_id_widget, joy_axis_widget)
       variables['joystick_id'].trace('w', id_callback)
+      variables['joystick_id_widget'] = joy_id_widget
 
       axis_callback = functools.partial(self.joystick_axis_changed_callback, vjoy_axis, joy_id_widget, joy_axis_widget)
       variables['joystick_axis'].trace('w', axis_callback)
+      variables['joystick_axis_widget'] = joy_axis_widget
 
       # Mapping methods
       ttk.Label(option_frame, text = 'TODO: Mapping Method').pack(side = 'left')

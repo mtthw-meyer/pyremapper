@@ -4,7 +4,7 @@ import tkFileDialog
 import time
 import multiprocessing
 import pythoncom
-import pickle
+import dill as pickle
 
 from joystick import *
 from keymouse import *
@@ -20,6 +20,7 @@ class Remapper(Tkinter.Tk):
       Tkinter.Tk.__init__(self, parent)
       self.parent = parent
       self.title('Joystick Remapper')
+
 
       self.settings = settings
       self.mapping_functions = mapping_functions
@@ -52,10 +53,12 @@ class Remapper(Tkinter.Tk):
 
       self.notebook = ttk.Notebook(self)
       self.notebook.pack(fill='both', expand='yes', padx=5, pady=5)
+      self.frames = list()
       # For each vJoystick create a tab
       for vJoy_id, vJoystick in self.joystick_manager.get_vJoysticks().items():
          frame = JoystickFrame(vJoystick, self.joystick_manager, self.key_mouse_manager, self)
          frame.pack()
+         self.frames.append(frame)
          self.notebook.add(frame, text='Virtual Joystick %s' % vJoy_id)
 
    def create_menubar(self):
@@ -114,12 +117,43 @@ class Remapper(Tkinter.Tk):
          if filename is '':
             return
 
-      f = open(filename, 'rb')
-      data = pickle.load(f)
-      self.key_mouse_manager.hotkeys = data.get(('key_mouse_manager_hotkeys'), dict())
-      self.key_mouse_manager.key_sets = data.get(('key_mouse_manager_keysets'), dict())
-      self.joystick_manager.mappings = data.get(('joystick_manager_mappings'), dict())
-      f.close()
+      # Load pickle
+      with open(filename, 'rb') as pickle_file:
+         data = pickle.load(pickle_file)
+         self.key_mouse_manager.hotkeys = data.get(('key_mouse_manager_hotkeys'), dict())
+         self.key_mouse_manager.key_sets = data.get(('key_mouse_manager_keysets'), dict())
+         self.joystick_manager.mappings = data.get(('joystick_manager_mappings'), dict())
+
+      # Hotkey triggers
+      # Changed keyboard widgets
+      for vjoy_tuple, hotkey_list in self.key_mouse_manager.hotkeys.items():
+         vjoy_id, _, vjoy_axis = vjoy_tuple
+         axis_index = self.joystick_manager.get_axis_index(vjoy_axis)
+         variables = self.frames[vjoy_id - 1].tk_variables[axis_index]
+         variables['input_type_radio'].set('keyboard')
+         binding_number = 0
+         for hotkey in hotkey_list:
+            if not hotkey.on_up:
+               variables['bound_button_widget_%i' % binding_number].configure(text = [k for k in hotkey.keys])
+               variables['entry_%i' % binding_number].set(hotkey.value)
+               binding_number += 1
+            else:
+               # Handle auto center
+               # TODO
+               pass
+            
+      # Changed joystick widgets
+      for vjoy_tuple, pygame_tuple in self.joystick_manager.mappings.items():
+         # Get variables
+         vjoy_id, _, vjoy_axis = vjoy_tuple
+         axis_index = self.joystick_manager.get_axis_index(vjoy_axis)
+         variables = self.frames[vjoy_id - 1].tk_variables[axis_index]
+         pygame_id, _, pygame_axis, _f, = pygame_tuple
+         # Set variables
+         variables['input_type_radio'].set('joystick')
+         variables['joystick_id_widget'].current(pygame_id)
+         variables['joystick_axis_widget'].current(pygame_axis)
+
       return
 
    def save_hotkeys(self, filename = None):
