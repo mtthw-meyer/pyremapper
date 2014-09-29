@@ -2,7 +2,6 @@ import uuid
 import ctypes
 import threading
 
-import pythoncom
 import pyHook
 
 
@@ -31,8 +30,8 @@ class KeyMouseManager(object):
    def on_key_down(self, event):
       self.keys_down.add(ID2Key[event.KeyID])
 
-      for hotkey_list in self.hotkeys.values():
-         for hotkey in hotkey_list:
+      for hotkey_dict in self.hotkeys.values():
+         for hotkey in hotkey_dict.values():
             # Ignore on up hotkeys
             if hotkey.on_up:
                continue
@@ -49,8 +48,8 @@ class KeyMouseManager(object):
       key_up = ID2Key[event.KeyID]
       key_up_set = frozenset(key_up)
 
-      for hotkey_list in self.hotkeys.values():
-         for hotkey in hotkey_list:
+      for hotkey_dict in self.hotkeys.values():
+         for hotkey in hotkey_dict.values():
             # Ignore on down hotkeys
             if not hotkey.on_up:
                continue
@@ -78,27 +77,44 @@ class KeyMouseManager(object):
                return True
       return False
 
-   def add_hotkey(self, vjoy_tuple, value, keys, on_up = False, key_set = None):
-      hotkey = Hotkey(keys, vjoy_tuple, value, on_up, key_set)
-      self.hotkeys.setdefault(vjoy_tuple, list()).append(hotkey)
+   def add_hotkey(self, keys, value, vjoy_tuple, binding, on_up = False, key_set = None):
+      hotkey_dict = self.hotkeys.setdefault(vjoy_tuple, dict())
+      if binding in hotkey_dict:
+         update_hotkey(vjoy_tuple, binding, value = value)
+      else:
+         hotkey = Hotkey(keys, value, vjoy_tuple, on_up, key_set)
+         hotkey_dict[binding] = hotkey
 
       if key_set is not None:
          self.keysets.setdefault(key_set, set()).add(hotkey.keys)
 
       return vjoy_tuple
 
-   def remove_hotkey(self, vjoy_tuple):
+   def update_hotkey(self, vjoy_tuple, binding, keys = None, value = None):
+      hotkey_dict = self.hotkeys.get(vjoy_tuple, None)
+      if hotkey_dict is None:
+         return False
+
+      hotkey = hotkey_dict.get(binding)
+      if hotkey is None:
+         return False
+
+      if keys is not None:
+         hotkey.keys = keys
+      if value is not None:
+         hotkey.value = value
+
+      return True
+
+   def remove_hotkey(self, vjoy_tuple, binding):
       if vjoy_tuple in self.hotkeys:
-         self.hotkeys.pop(vjoy_tuple)
-         return True
-      return False
-   
-   def pump_waiting(self):
-      pythoncom.PumpWaitingMessages()
+         if binding in self.hotkeys[vjoy_tuple]:
+            return self.hotkeys[vjoy_tuple].pop(binding)
       return
 
-   def pump(self):
-      pythoncom.PumpMessages()
+   def remove_hotkeys(self, vjoy_tuple):
+      if vjoy_tuple in self.hotkeys:
+         return self.hotkeys.pop(vjoy_tuple)
       return
 
    def quit(self):
@@ -106,7 +122,7 @@ class KeyMouseManager(object):
 
 
 class Hotkey(object):
-   def __init__(self, keys, vjoy_tuple, value, on_up, key_set):
+   def __init__(self, keys, value, vjoy_tuple, on_up, key_set):
       self.keys = frozenset(keys)
       self.vjoy_tuple = vjoy_tuple
       self.value = value

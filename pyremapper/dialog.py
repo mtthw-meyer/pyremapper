@@ -50,8 +50,8 @@ class Dialog(Tkinter.Toplevel):
       # standard buttons
       box = ttk.Frame(self)
 
-      #w = ttk.Button(box, text="OK", width=10, command=self.ok, default=Tkinter.ACTIVE)
-      #w.pack(side='left', padx=5, pady=5)
+      w = ttk.Button(box, text="OK", width=10, command=self.ok, default=Tkinter.ACTIVE)
+      w.pack(side='left', padx=5, pady=5)
       w = ttk.Button(box, text="Cancel", width=10, command=self.cancel)
       w.pack(side='left', padx=5, pady=5)
 
@@ -85,7 +85,7 @@ class Dialog(Tkinter.Toplevel):
 class Binder(Dialog):
    MODIFIERS = frozenset(['Lshift', 'Rshift', 'Lcontrol', 'Rcontrol', 'Lmenu', 'Rmenu', 'Lwin', 'Rwin'])
 
-   def __init__(self, parent, keyboard_manager, title = None):
+   def __init__(self, parent, keyboard_manager, title = 'Bind'):
       self.keyboard_manager = keyboard_manager
       self.thread = None
       self.queue = Queue.Queue()
@@ -118,4 +118,24 @@ class Binder(Dialog):
       if not self.done:
          self.queue.put( self.keyboard_manager.get_keys_down() )
       return
-   
+
+
+class ExceptionDialog(Dialog):
+   def __init__(self, parent, error, title = 'Error'):
+      self.error = error
+      Dialog.__init__(self, parent, title)
+      return
+
+   def buttonbox(self):
+      # add standard button box. override if you don't want the
+      # standard buttons
+      box = ttk.Frame(self)
+      w = ttk.Button(box, text="OK", width=10, command=self.ok, default=Tkinter.ACTIVE)
+      w.pack(side='left', padx=5, pady=5)
+      box.pack()
+      return
+
+   def body(self, parent):
+      label = ttk.Label(parent, text = self.error)
+      label.pack()
+      return label

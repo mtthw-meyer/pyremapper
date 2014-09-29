@@ -21,6 +21,7 @@ pygameJoyComponent = Enum([
 
 class JoystickManager(object):
    __max_vJoysticks = 8
+   __HID_OFFSET = 0x2F
 
    def __init__(self):
       # Initialize pygame
@@ -46,8 +47,7 @@ class JoystickManager(object):
       self.mappings[vjoy_tuple] = (pygame_id, pygame_component, pygame_component_id, mapping_func)
       return
 
-   def remove_map(self, vjoy_id, vjoy_component, vjoy_component_id):
-      vjoy_tuple = (vjoy_id, vjoy_component, vjoy_component_id)
+   def remove_map(self, vjoy_tuple):
       if vjoy_tuple in self.mappings:
          self.mappings.pop(vjoy_tuple)
       return
@@ -74,7 +74,10 @@ class JoystickManager(object):
       return
       
    def get_axis_index(self, HID):
-      return (HID - 0x2F)
+      return (HID - self.__HID_OFFSET)
+
+   def get_hid_value(self, axis_index):
+      return (axis_index + self.__HID_OFFSET)
 
    def get_vJoystick(self, id):
       return self.vjoy.vjoy_devices[id]

@@ -21,7 +21,6 @@ class Remapper(Tkinter.Tk):
       self.parent = parent
       self.title('Joystick Remapper')
 
-
       self.settings = settings
       self.mapping_functions = mapping_functions
 
@@ -122,38 +121,43 @@ class Remapper(Tkinter.Tk):
          data = pickle.load(pickle_file)
          self.key_mouse_manager.hotkeys = data.get(('key_mouse_manager_hotkeys'), dict())
          self.key_mouse_manager.key_sets = data.get(('key_mouse_manager_keysets'), dict())
-         self.joystick_manager.mappings = data.get(('joystick_manager_mappings'), dict())
+         mappings = data.get(('joystick_manager_mappings'), dict())
 
       # Hotkey triggers
       # Changed keyboard widgets
-      for vjoy_tuple, hotkey_list in self.key_mouse_manager.hotkeys.items():
+      for vjoy_tuple, hotkey_dict in self.key_mouse_manager.hotkeys.items():
+         # Setup variables
          vjoy_id, _, vjoy_axis = vjoy_tuple
          axis_index = self.joystick_manager.get_axis_index(vjoy_axis)
          variables = self.frames[vjoy_id - 1].tk_variables[axis_index]
          variables['input_type_radio'].set('keyboard')
+
          binding_number = 0
-         for hotkey in hotkey_list:
+         for hotkey in hotkey_dict.values():
             if not hotkey.on_up:
                variables['bound_button_widget_%i' % binding_number].configure(text = [k for k in hotkey.keys])
                variables['entry_%i' % binding_number].set(hotkey.value)
                binding_number += 1
             else:
-               # Handle auto center
-               # TODO
-               pass
-            
+               variables['auto_center_entry_var'].set(hotkey.value)
+               variables['auto_center_checkbutton_var'].set(True)
+         
+
       # Changed joystick widgets
-      for vjoy_tuple, pygame_tuple in self.joystick_manager.mappings.items():
-         # Get variables
+      for vjoy_tuple, pygame_tuple in mappings.items():
+         # Setup variables
          vjoy_id, _, vjoy_axis = vjoy_tuple
          axis_index = self.joystick_manager.get_axis_index(vjoy_axis)
          variables = self.frames[vjoy_id - 1].tk_variables[axis_index]
+
+         variables['input_type_radio'].set('joystick')
          pygame_id, _, pygame_axis, _f, = pygame_tuple
          # Set variables
-         variables['input_type_radio'].set('joystick')
          variables['joystick_id_widget'].current(pygame_id)
          variables['joystick_axis_widget'].current(pygame_axis)
+         
 
+      print self.key_mouse_manager.hotkeys
       return
 
    def save_hotkeys(self, filename = None):
@@ -170,10 +174,10 @@ class Remapper(Tkinter.Tk):
       }
       pickle.dump(data, f, -1)
       f.close()
+      print self.key_mouse_manager.hotkeys
       return
 
 
 if __name__ == '__main__':
-   import pdb
    remapper = Remapper()
    remapper.start()
