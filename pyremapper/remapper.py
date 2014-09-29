@@ -23,6 +23,7 @@ class Remapper(Tkinter.Tk):
 
       self.settings = settings
       self.mapping_functions = mapping_functions
+      self.hotkeys_filename = None
 
       self.joystick_manager = JoystickManager(mapping_functions)
       self.joystick_manager.start()
@@ -32,22 +33,25 @@ class Remapper(Tkinter.Tk):
       self.initialize()
       return
 
-   def load(self):
+   def load_settings(self):
       try:
          f = open(self.settings, 'r')
-         for line in f.readlines():
-            pass
+         settings = dict([ [item.strip() for item in line.split('=')] for line in f.readlines() ])
          f.close()
       except IOError:
          print 'No settings file found, using default settings'
+         return
+
+      self.geometry(settings['Window'])
       return
 
-   def save(self):
+   def save_settings(self):
       f = open(self.settings, 'w')
-      # Write stuff
+      f.write('Window = %s' % self.geometry())
       f.close()
 
    def initialize(self):
+      self.load_settings()
       self.create_menubar()
 
       self.notebook = ttk.Notebook(self)
@@ -66,10 +70,9 @@ class Remapper(Tkinter.Tk):
 
       # File menu
       file_menu = Tkinter.Menu(self, tearoff = 0)
-      file_menu.add_command(label = 'Load', command = self.load_hotkeys)
-      file_menu.add_command(label = 'Save', command = self.save_hotkeys)
-      file_menu.add_command(label = 'Save as', command = self.save_hotkeys)
-      file_menu.add_command(label = 'Clear all', command = lambda: self.key_mouse_daemon.terminate())
+      file_menu.add_command(label = 'Load...', command = self.hotkeys_load)
+      file_menu.add_command(label = 'Save', command = self.hotkeys_save)
+      file_menu.add_command(label = 'Save as...', command = self.hotkeys_save_as)
       file_menu.add_command(label = 'Quit', command = self.destroy)
       self.menu.add_cascade(label = 'File', menu = file_menu)
 
@@ -82,19 +85,6 @@ class Remapper(Tkinter.Tk):
 
       # Display the menu
       self.config(menu = self.menu)
-      
-   def ask_open(self):
-      file_name = tkFileDialog.askopenfilename()
-      self.load(file_name)
-      
-   def clear(self):
-      pass
-
-   def update_me(self):
-      while not self.has_focus:
-         self.update()
-         time.sleep(0.05)
-      return
 
    def start(self):
       self.key_mouse_daemon = multiprocessing.Process(target = pythoncom.PumpMessages)
@@ -103,6 +93,7 @@ class Remapper(Tkinter.Tk):
       return
 
    def destroy(self):
+      self.save_settings()
       self.joystick_manager.quit()
       if self.key_mouse_daemon is not None:
          self.key_mouse_daemon.terminate()
@@ -110,11 +101,13 @@ class Remapper(Tkinter.Tk):
       Tkinter.Tk.destroy(self)
       return
       
-   def load_hotkeys(self, filename = None):
+   def hotkeys_load(self, filename = None):
       if filename is None:
          filename = tkFileDialog.askopenfilename()
          if filename is '':
             return
+
+      self.hotkeys_filename = filename
 
       # Load pickle
       with open(filename, 'rb') as pickle_file:
@@ -160,13 +153,20 @@ class Remapper(Tkinter.Tk):
 
       return
 
-   def save_hotkeys(self, filename = None):
-      if filename is None:
-         filename = tkFileDialog.asksaveasfilename()
-         if filename is '':
+   def hotkeys_save_as(self):
+      filename = tkFileDialog.asksaveasfilename()
+      if filename is '':
             return
+      self.hotkeys_filename = filename
+      self.hotkeys_save(filename = filename)
+      return
 
-      f = open(filename, 'wb')
+   def hotkeys_save(self, filename = None):
+      if self.hotkeys_filename is None:
+         self.hotkeys_save_as()
+         return
+
+      f = open(self.hotkeys_filename, 'wb')
       data = {
          ('key_mouse_manager_hotkeys'): self.key_mouse_manager.hotkeys,
          ('key_mouse_manager_keysets'): self.key_mouse_manager.keysets,
