@@ -68,28 +68,28 @@ class KeyMouseManager(object):
       return True
       
    def hotkey_inkeyset(self, hotkey):
-      if hotkey.key_set is not None:
+      if hotkey.keyset is not None:
          if hotkey.issubset(self.keys_down):
             freekeys = self.keys_down
-            for key in self.keysets[hotkey.key_set]:
+            for key in self.keysets[hotkey.keyset]:
                freekeys = freekeys - key
             if len(freekeys) == 0:
                return True
       return False
 
-   def add_hotkey(self, keys, value, vjoy_tuple, binding, on_up = False, key_set = None):
+   def add_hotkey(self, keys, value, vjoy_tuple, binding, on_up = False, keyset = None):
       hotkey_dict = self.hotkeys.setdefault(vjoy_tuple, dict())
       if binding in hotkey_dict:
          self.update_hotkey(vjoy_tuple, binding, value = value)
       else:
-         hotkey = Hotkey(keys, value, vjoy_tuple, on_up, key_set)
+         hotkey = Hotkey(keys, value, vjoy_tuple, on_up, keyset)
          hotkey_dict[binding] = hotkey
-         if key_set is not None:
-            self.keysets.setdefault(key_set, set()).add(hotkey.keys)
+         if keyset is not None:
+            self.keysets.setdefault(keyset, set()).add(hotkey.keys)
 
       return vjoy_tuple
 
-   def update_hotkey(self, vjoy_tuple, binding, keys = None, value = None):
+   def update_hotkey(self, vjoy_tuple, binding, keys = None, value = None, keyset = None):
       hotkey_dict = self.hotkeys.get(vjoy_tuple, None)
       if hotkey_dict is None:
          return False
@@ -102,7 +102,19 @@ class KeyMouseManager(object):
          hotkey.keys = keys
       if value is not None:
          hotkey.value = value
+      if keyset is not None:
+         hotkey.keyset = keyset
+         self.keysets.setdefault(keyset, set()).add(hotkey.keys)
 
+      return True
+      
+   def update_hotkeys(self, vjoy_tuple, keys = None, value = None, keyset = None):
+      hotkey_dict = self.hotkeys.get(vjoy_tuple, None)
+      if hotkey_dict is None:
+         return False
+
+      for binding, hotkey in hotkey_dict.items():
+         self.update_hotkey(vjoy_tuple, binding, keys, value, keyset)
       return True
 
    def remove_hotkey(self, vjoy_tuple, binding):
@@ -121,12 +133,12 @@ class KeyMouseManager(object):
 
 
 class Hotkey(object):
-   def __init__(self, keys, value, vjoy_tuple, on_up, key_set):
+   def __init__(self, keys, value, vjoy_tuple, on_up, keyset):
       self.keys = frozenset(keys)
       self.vjoy_tuple = vjoy_tuple
       self.value = value
       self.on_up = on_up
-      self.key_set = key_set
+      self.keyset = keyset
       return
 
    def match(self, keys):

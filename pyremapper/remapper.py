@@ -113,10 +113,9 @@ class Remapper(Tkinter.Tk):
       with open(filename, 'rb') as pickle_file:
          data = pickle.load(pickle_file)
          self.key_mouse_manager.hotkeys = data.get(('key_mouse_manager_hotkeys'), dict())
-         self.key_mouse_manager.key_sets = data.get(('key_mouse_manager_keysets'), dict())
+         self.key_mouse_manager.keysets = data.get(('key_mouse_manager_keysets'), dict())
          # Save to local variable, joystick mappings setup by the UI triggers
          mappings = data.get(('joystick_manager_mappings'), dict())
-         print mappings
 
       # Setup loaded hotkeys UI settings
       for vjoy_tuple, hotkey_dict in self.key_mouse_manager.hotkeys.items():
@@ -133,9 +132,8 @@ class Remapper(Tkinter.Tk):
                variables['entry_%i' % binding_number].set(hotkey.value)
                binding_number += 1
             else:
-               variables['auto_center_entry_var'].set(hotkey.value)
+               variables['auto_center_var'].set(hotkey.value)
                variables['auto_center_checkbutton_var'].set(True)
-         
 
       # Setup loaded joystick UI settings
       for vjoy_tuple, pygame_tuple in mappings.items():
@@ -174,7 +172,6 @@ class Remapper(Tkinter.Tk):
       }
       pickle.dump(data, f, -1)
       f.close()
-      print self.joystick_manager.mappings
       return
 
 

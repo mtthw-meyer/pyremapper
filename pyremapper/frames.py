@@ -11,6 +11,7 @@ from enum import Enum
 
 
 class JoystickFrame(ttk.Frame):
+   __num_keysets = 4
    def __init__(self, vJoystick, joystick_manager, key_mouse_manager, parent = None, **kwargs):
       #TK setup
       ttk.Frame.__init__(self, parent, **kwargs)
@@ -28,6 +29,7 @@ class JoystickFrame(ttk.Frame):
 
          # Setup Tkinter variables
          axis_variables['input_type_radio'] = Tkinter.StringVar()
+         axis_variables['keyset']  = Tkinter.IntVar(0)
          axis_variables['joystick_id'] = Tkinter.StringVar()
          axis_variables['joystick_axis'] = Tkinter.StringVar()
          axis_variables['joystick_method'] = Tkinter.StringVar()
@@ -83,17 +85,17 @@ class JoystickFrame(ttk.Frame):
 
          # Create a button widget and bind it to bind_button_callback
          # This will configure the label text and setup the hotkey
-         entry_var = Tkinter.StringVar()
-         variables['entry_%i' % bind_number] = entry_var
-         bind_callback = functools.partial(self.bind_button_callback, bound_label_widget, entry_var, vjoy_tuple, bind_number)
+         axis_value_var = Tkinter.StringVar()
+         variables['entry_%i' % bind_number] = axis_value_var
+         bind_callback = functools.partial(self.bind_button_callback, bound_label_widget, axis_value_var, variables['keyset'], vjoy_tuple, bind_number)
          button_widget = ttk.Button( option_frame, text = 'Bind', command = bind_callback )
          button_widget.pack(side = 'left')
 
          # Label and entry for value
          ttk.Label(option_frame, text = 'Value').pack(side = 'left')
-         ttk.Entry(option_frame, width = 7, textvariable = entry_var).pack(side = 'left')
-         value_callback = functools.partial(self.bind_value_callback, entry_var, vjoy_tuple, bind_number)
-         entry_var.trace('w', value_callback)
+         ttk.Entry(option_frame, width = 7, textvariable = axis_value_var).pack(side = 'left')
+         value_callback = functools.partial(self.bind_value_callback, axis_value_var, variables['keyset'], vjoy_tuple, bind_number)
+         axis_value_var.trace('w', value_callback)
          
       # end for
 
@@ -101,22 +103,40 @@ class JoystickFrame(ttk.Frame):
       auto_center_frame = ttk.Frame(keyboard_options_frame)
       auto_center_frame.grid(row = 5, column = 1, columnspan = 5, stick='W', padx = 20)
       # Auto center checkbutton
-      auto_center_checkbutton_var = Tkinter.IntVar()
+      auto_center_checkbutton_var = Tkinter.IntVar(0)
       variables['auto_center_checkbutton_var'] = auto_center_checkbutton_var
       checkbutton = ttk.Checkbutton(
          auto_center_frame,
          text = 'Auto center',
          variable = auto_center_checkbutton_var
       )
-      # Auto center entry
-      auto_center_entry_var = Tkinter.StringVar()
-      variables['auto_center_entry_var'] = auto_center_entry_var
-      entry = ttk.Entry(auto_center_frame, state = DISABLE, width = 5, textvariable = auto_center_entry_var )
-      callback = functools.partial(self.auto_center_changed_callback, entry, auto_center_entry_var, auto_center_checkbutton_var, vjoy_tuple)
-      auto_center_checkbutton_var.trace('w', callback)
-
       checkbutton.pack(side = 'left')
-      entry.pack(side = 'left')
+      # Auto center entry
+      auto_center_var = Tkinter.StringVar()
+      variables['auto_center_var'] = auto_center_var
+      auto_center_widget = ttk.Entry(auto_center_frame, state = DISABLE, width = 5, textvariable = auto_center_var )
+      auto_center_widget.pack(side = 'left')
+
+      # Keyset frame
+      keyset_frame = ttk.LabelFrame(keyboard_options_frame, text = 'Keyset')
+      keyset_frame.grid(row = 6, column = 1, columnspan = 5, stick='W', padx = 20)
+      ttk.Radiobutton(keyset_frame, text = 'None', value = 0, variable = variables['keyset']).grid(row = 1, column = 0)
+      for col in range(1, self.__num_keysets + 1):
+         keyset = col
+         ttk.Radiobutton(keyset_frame, text = keyset, value = keyset, variable = variables['keyset']).grid(row = 1, column = col)
+      keyset_changed_callback = functools.partial(self.keyset_changed_callback,  variables['keyset'], vjoy_tuple)
+      variables['keyset'].trace('w', keyset_changed_callback)
+
+      # Setup callbacks
+      auto_center_callback = functools.partial(
+         self.auto_center_changed_callback,
+         auto_center_widget,
+         auto_center_var,
+         auto_center_checkbutton_var,
+         variables['keyset'],
+         vjoy_tuple
+      )
+      auto_center_checkbutton_var.trace('w', auto_center_callback)
 
       return keyboard_options_frame
 
@@ -204,7 +224,7 @@ class JoystickFrame(ttk.Frame):
       return
 
    @exception_handler
-   def bind_button_callback(self, widget, value_var, vjoy_tuple, bind_number):
+   def bind_button_callback(self, widget, value_var, keyset_var, vjoy_tuple, bind_number):
       binder = Binder(self.parent, self.key_mouse_manager)
       keys_down = binder.value
       text = [ i for i in keys_down ]
@@ -213,30 +233,33 @@ class JoystickFrame(ttk.Frame):
          value = float(value_var.get())
       except ValueError:
          return
-      self.key_mouse_manager.add_hotkey(keys_down, value, vjoy_tuple, bind_number)
-      self.key_mouse_manager.hotkeys[vjoy_tuple]
+
+      keyset = keyset_var.get() if keyset_var.get() > 0 else None
+      self.key_mouse_manager.add_hotkey(keys_down, value, vjoy_tuple, bind_number, keyset = keyset)
       return
 
    @exception_handler
-   def bind_value_callback(self, value_var, vjoy_tuple, bind_number, *_):
+   def bind_value_callback(self, value_var, keyset_var, vjoy_tuple, bind_number, *_):
       try:
          value = float(value_var.get())
       except ValueError:
          return
+
+      keyset = keyset_var.get() if keyset_var.get() > 0 else None
       self.key_mouse_manager.update_hotkey(vjoy_tuple, bind_number, value = value)
       return
 
    @exception_handler
-   def auto_center_changed_callback(self, entry_widget, entry_var, checkbutton_var, vjoy_tuple, *_):
+   def auto_center_changed_callback(self, auto_center_widget, auto_center_var, checkbutton_var, keyset_var, vjoy_tuple, *_):
       is_enabled = checkbutton_var.get()
       hotkeys_dict = self.key_mouse_manager.hotkeys.get(vjoy_tuple, dict())
       if is_enabled:
          # Enable value widget and set default value
-         entry_widget.state( ENABLE )
-         if not entry_var.get():
-            entry_var.set('0')
+         auto_center_widget.state( ENABLE )
+         if not auto_center_var.get():
+            auto_center_var.set('0')
          try:
-            value = float(entry_var.get())
+            value = float(auto_center_var.get())
          except ValueError:
             return
          # Create on up hotkeys for any existing hotkeys
@@ -244,13 +267,19 @@ class JoystickFrame(ttk.Frame):
             if hotkey.on_up:
                continue
             binding = '%s_up' % bind_number
-            self.key_mouse_manager.add_hotkey(hotkey.keys, value, vjoy_tuple, binding, on_up = True, key_set = vjoy_tuple)
+            keyset = keyset_var.get() if keyset_var.get() > 0 else None
+            self.key_mouse_manager.add_hotkey(hotkey.keys, value, vjoy_tuple, binding, on_up = True, keyset = keyset)
       else:
-         entry_widget.state( DISABLE )
+         auto_center_widget.state( DISABLE )
          # Remove on up hotkeys from the given axis
          for binding, hotkey in hotkeys_dict.items():
             if hotkey.on_up:
                self.key_mouse_manager.remove_hotkey(vjoy_tuple, binding)
+      return
+      
+   def keyset_changed_callback(self, keyset_var, vjoy_tuple, *_):
+      keyset = keyset_var.get() if keyset_var.get() > 0 else None
+      self.key_mouse_manager.update_hotkeys(vjoy_tuple, keyset = keyset)
       return
 
    @exception_handler
