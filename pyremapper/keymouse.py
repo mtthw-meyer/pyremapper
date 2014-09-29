@@ -80,13 +80,12 @@ class KeyMouseManager(object):
    def add_hotkey(self, keys, value, vjoy_tuple, binding, on_up = False, key_set = None):
       hotkey_dict = self.hotkeys.setdefault(vjoy_tuple, dict())
       if binding in hotkey_dict:
-         update_hotkey(vjoy_tuple, binding, value = value)
+         self.update_hotkey(vjoy_tuple, binding, value = value)
       else:
          hotkey = Hotkey(keys, value, vjoy_tuple, on_up, key_set)
          hotkey_dict[binding] = hotkey
-
-      if key_set is not None:
-         self.keysets.setdefault(key_set, set()).add(hotkey.keys)
+         if key_set is not None:
+            self.keysets.setdefault(key_set, set()).add(hotkey.keys)
 
       return vjoy_tuple
 

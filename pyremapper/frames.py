@@ -30,6 +30,7 @@ class JoystickFrame(ttk.Frame):
          axis_variables['input_type_radio'] = Tkinter.StringVar()
          axis_variables['joystick_id'] = Tkinter.StringVar()
          axis_variables['joystick_axis'] = Tkinter.StringVar()
+         axis_variables['joystick_method'] = Tkinter.StringVar()
          axis_variables['frames'] = dict()
 
          # Create the frame for the axis
@@ -128,28 +129,40 @@ class JoystickFrame(ttk.Frame):
       option_frame = ttk.Frame(joystick_options_frame)
       option_frame.grid(row = 2, column = 1, columnspan = 5, stick='W', padx = 20)
       # Joystick ID
-      ttk.Label(option_frame, text = 'Joy ID').pack(side = 'left')
+      ttk.Label(option_frame, text = 'Joy ID').grid( row = 1, column = 1)
       # Get the list of joystick names
       joystick_names  = ['%i - %s' % (joy.get_id(), joy.get_name()) for joy in self.joystick_manager.pygame_joysticks.values()]
       # Joystick ID widget
       joy_id_widget = ttk.Combobox(option_frame, width = 20, values = joystick_names, textvariable = variables['joystick_id'])
-      joy_id_widget.pack(side = 'left')
+      joy_id_widget.grid( row = 1, column = 2)
       # Joystick Axis Widget
-      joy_axis_widget = ttk.Combobox(option_frame, width = 5, state = DISABLE, textvariable = variables['joystick_axis'])
-      joy_axis_widget.pack(side = 'left')
+      joy_axis_widget = ttk.Combobox(option_frame, width = 5, textvariable = variables['joystick_axis'])
+      joy_axis_widget.grid( row = 1, column = 3)
+      # Joystick method widget
+      method_widget = ttk.Combobox(
+         option_frame,
+         width = 10,
+         values = self.joystick_manager.mapping_functions.keys(),
+         textvariable = variables['joystick_method'],
+      )
+      method_widget.grid( row = 1, column = 4)
+      method_widget.current(0)
+      # Joystick invert widget
+      invert_axis = Tkinter.IntVar()
+      variables['invert_axis'] = invert_axis
+      invert_widget = ttk.Checkbutton(option_frame, text = 'Invert?', variable = invert_axis)
+      invert_widget.grid( row = 2, column = 4)
 
       # Changed axes selection based on joystick ID
-      
       id_callback = functools.partial(self.joystick_id_changed_callback, joy_id_widget, joy_axis_widget)
       variables['joystick_id'].trace('w', id_callback)
       variables['joystick_id_widget'] = joy_id_widget
 
-      axis_callback = functools.partial(self.joystick_axis_changed_callback, vjoy_axis, joy_id_widget, joy_axis_widget)
-      variables['joystick_axis'].trace('w', axis_callback)
+      joystick_widget_callback = functools.partial(self.joystick_widget_changed_callback, vjoy_axis, joy_id_widget, joy_axis_widget, method_widget, invert_axis)
+      variables['joystick_axis'].trace('w', joystick_widget_callback)
+      variables['joystick_method'].trace('w', joystick_widget_callback)
+      invert_axis.trace('w', joystick_widget_callback)
       variables['joystick_axis_widget'] = joy_axis_widget
-
-      # Mapping methods
-      ttk.Label(option_frame, text = 'TODO: Mapping Method').pack(side = 'left')
 
       return joystick_options_frame
 
@@ -174,13 +187,11 @@ class JoystickFrame(ttk.Frame):
 
    @exception_handler
    def input_type_radio_changed_callback(self, axis_number, *_):
-      value = self.tk_variables[axis_number]['input_type_radio'].get()
+      radio_value = self.tk_variables[axis_number]['input_type_radio'].get()
       for name, widget in self.tk_variables[axis_number]['frames'].items():
-         if value == name:
-            # Enable GUI
+         if radio_value == name:
             set_state_recursive(widget, ENABLE)
             # Enable Hotkeys?
-            pass
          else:
             # Disable GUI
             set_state_recursive(widget, DISABLE)
@@ -251,14 +262,14 @@ class JoystickFrame(ttk.Frame):
       return
 
    @exception_handler
-   def joystick_axis_changed_callback(self, vjoy_axis, id_widget, axis_widget, *_):
-      self.joystick_manager.add_map(
-         self.vJoystick.id,
-         vJoyComponent.axis,
-         vjoy_axis,
+   def joystick_widget_changed_callback(self, vjoy_axis, id_widget, axis_widget, method_widget, invert_variable, *_):
+      vjoy_tuple = ( self.vJoystick.id, vJoyComponent.axis, vjoy_axis)
+      self.joystick_manager.update_map(
+         vjoy_tuple,
          id_widget.current(),
          pygameJoyComponent.axis,
          axis_widget.current(),
-         lambda x: x # Joysticks hard coded to linear
+         method_widget.current(),
+         invert_variable.get()
       )
       return

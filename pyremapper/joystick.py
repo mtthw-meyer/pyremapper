@@ -1,6 +1,8 @@
 import threading
 import time
 import pygame
+from collections import OrderedDict
+
 from vjoy import *
 from enum import Enum
 
@@ -18,17 +20,24 @@ pygameJoyComponent = Enum([
    'ball',
 ])
 
+def linear(x):
+   return x
 
 class JoystickManager(object):
    __max_vJoysticks = 8
    __HID_OFFSET = 0x2F
 
-   def __init__(self):
+   def __init__(self, mapping_functions):
       # Initialize pygame
       self.pygame = pygame
       self.pygame.init()
       self.running = False
       self.mappings = dict()
+      self.mapping_functions = OrderedDict([
+         ('Linear', linear),
+      ])
+      # Add user mapping functions
+      self.mapping_functions.update( [(map_dict['name'], map_dict['function']) for map_dict in mapping_functions] )
 
       # Initialize vJoy
       self.vjoy = vJoy()
@@ -42,9 +51,9 @@ class JoystickManager(object):
          self.pygame_joysticks[id].init()
       return
 
-   def add_map(self, vjoy_id, vjoy_component, vjoy_component_id, pygame_id, pygame_component, pygame_component_id, mapping_func):
-      vjoy_tuple = (vjoy_id, vjoy_component, vjoy_component_id)
-      self.mappings[vjoy_tuple] = (pygame_id, pygame_component, pygame_component_id, mapping_func)
+   def update_map(self, vjoy_tuple, pygame_id, pygame_component, pygame_component_id, mapping_func_offset, is_inverted):
+      mapping_func_name = self.mapping_functions.keys()[mapping_func_offset]
+      self.mappings[vjoy_tuple] = (pygame_id, pygame_component, pygame_component_id, mapping_func_name, is_inverted)
       return
 
    def remove_map(self, vjoy_tuple):
@@ -52,10 +61,12 @@ class JoystickManager(object):
          self.mappings.pop(vjoy_tuple)
       return
 
-   def run_map(self, vjoy_id, vjoy_component, vjoy_component_id, pygame_id, pygame_component, pygame_component_id, mapping_func):
+   def run_map(self, vjoy_id, vjoy_component, vjoy_component_id, pygame_id, pygame_component, pygame_component_id, mapping_func, is_inverted):
       if pygame_component == pygameJoyComponent.axis:
          pygame_value = self.pygame_joysticks[pygame_id].get_axis(pygame_component_id)
-         pygame_value = mapping_func(pygame_value)
+         if is_inverted:
+            pygame_value = pygame_value * -1
+         pygame_value = self.mapping_functions[mapping_func](pygame_value)
       else:
          return False
       self.set_component_value(vjoy_id, vjoy_component, vjoy_component_id, pygame_value)

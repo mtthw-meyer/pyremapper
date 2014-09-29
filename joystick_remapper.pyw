@@ -13,11 +13,11 @@ def invert(value):
 
 mapping_functions = [
    {
-      'name':     'Linear',
+      'name':     'Example-Linear',
       'function': linear,
    },
    {
-      'name':     'Invert',
+      'name':     'Example-Invert',
       'function': invert,
    },
 ]
