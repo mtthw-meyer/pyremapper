@@ -238,7 +238,10 @@ class JoystickFrame(ttk.Frame):
 
       keyset = keyset_var.get() if keyset_var.get() > 0 else None
       self.key_mouse_manager.add_hotkey(keys_down, value, vjoy_tuple, bind_number, keyset = keyset)
-      print [ (k,v) for k,v in self.key_mouse_manager.hotkeys.items() ]
+      # Trigget auto center update
+      axis_number = self.joystick_manager.get_axis_index(vjoy_tuple[2])
+      auto_center_check_var = self.tk_variables[axis_number]['auto_center_checkbutton_var']
+      auto_center_check_var.set(auto_center_check_var.get())
       return
 
    @exception_handler
@@ -251,7 +254,10 @@ class JoystickFrame(ttk.Frame):
 
       keyset = keyset_var.get() if keyset_var.get() > 0 else None
       self.key_mouse_manager.update_hotkey(vjoy_tuple, bind_number, value = value)
-      print [ (k,v) for k,v in self.key_mouse_manager.hotkeys.items() ]
+      # Trigget auto center update
+      axis_number = self.joystick_manager.get_axis_index(vjoy_tuple[2])
+      auto_center_check_var = self.tk_variables[axis_number]['auto_center_checkbutton_var']
+      auto_center_check_var.set(auto_center_check_var.get())
       return
 
    @exception_handler
@@ -280,13 +286,11 @@ class JoystickFrame(ttk.Frame):
          for binding, hotkey in hotkeys_dict.items():
             if hotkey.on_up:
                self.key_mouse_manager.remove_hotkey(vjoy_tuple, binding)
-      print [ (k,v) for k,v in self.key_mouse_manager.hotkeys.items() ]
       return
       
    def keyset_changed_callback(self, keyset_var, vjoy_tuple, *_):
       keyset = keyset_var.get() if keyset_var.get() > 0 else None
       self.key_mouse_manager.update_hotkeys(vjoy_tuple, keyset = keyset)
-      print [ (k,v) for k,v in self.key_mouse_manager.hotkeys.items() ]
       return
 
    @exception_handler
