@@ -14,6 +14,7 @@ from tools import *
 
 class Remapper(Tkinter.Tk):
    PUMP_DELAY = 10
+   default_extension = '.keys'
 
    def __init__(self, parent = None, settings = 'joystick_remapper.ini', mapping_functions = None):
       #TK setup
@@ -103,7 +104,10 @@ class Remapper(Tkinter.Tk):
       
    def hotkeys_load(self, filename = None):
       if filename is None:
-         filename = tkFileDialog.askopenfilename()
+         filename = tkFileDialog.askopenfilename(
+            defaultextension = self.default_extension,
+            filetypes = (('Hotkey file', self.default_extension),)
+         )
          if filename is '':
             return
 
@@ -152,7 +156,10 @@ class Remapper(Tkinter.Tk):
       return
 
    def hotkeys_save_as(self):
-      filename = tkFileDialog.asksaveasfilename()
+      filename = tkFileDialog.asksaveasfilename(
+         defaultextension = self.default_extension,
+         filetypes = (('Hotkey file', self.default_extension),)
+      )
       if filename is '':
             return
       self.hotkeys_filename = filename
