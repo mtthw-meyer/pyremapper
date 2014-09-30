@@ -37,7 +37,8 @@ class JoystickManager(object):
          ('Linear', linear),
       ])
       # Add user mapping functions
-      self.mapping_functions.update( [(map_dict['name'], map_dict['function']) for map_dict in mapping_functions] )
+      if mapping_functions:
+         self.mapping_functions.update( [(map_dict['name'], map_dict['function']) for map_dict in mapping_functions] )
 
       # Initialize vJoy
       self.vjoy = vJoy()
