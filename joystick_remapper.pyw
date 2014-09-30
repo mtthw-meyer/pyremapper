@@ -1,3 +1,4 @@
+import sys
 from pyremapper.remapper import Remapper
 
 
@@ -24,5 +25,9 @@ mapping_functions = [
 
 
 if __name__ == '__main__':
+   log_file = open('remapper.log', 'w')
+   sys.stdout = log_file
+   sys.stderr = log_file
    remapper = Remapper(mapping_functions = mapping_functions)
    remapper.start()
+   log_file.close()
