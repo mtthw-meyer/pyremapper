@@ -67,6 +67,11 @@ class JoystickManager(object):
          if is_inverted:
             pygame_value = pygame_value * -1
          pygame_value = self.mapping_functions[mapping_func](pygame_value)
+         # Make values in bounds
+         if pygame_value > 1.0:
+            pygame_value = 1.0
+         elif pygame_value < -1.0:
+            pygame_value = -1.0
       else:
          return False
       self.set_component_value(vjoy_id, vjoy_component, vjoy_component_id, pygame_value)
