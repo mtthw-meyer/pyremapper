@@ -133,33 +133,38 @@ class Remapper(Tkinter.Tk):
       for vjoy_tuple, hotkey_dict in self.key_mouse_manager.hotkeys.items():
          # Setup variables
          vjoy_id, _, vjoy_axis = vjoy_tuple
-         axis_index = self.joystick_manager.get_axis_index(vjoy_axis)
-         variables = self.frames[vjoy_id - 1].tk_variables[axis_index]
-         variables['input_type_radio'].set('keyboard')
+         vjoy_frame = self.frames[vjoy_id - 1]
+         vjoy_axis_frame = vjoy_frame.frames[self.joystick_manager.get_axis_index(vjoy_axis)]
+         keyboard_frame = vjoy_axis_frame.frames[vjoy_axis_frame.KEYBOARD_FRAME_INDEX]
          # Configure UI
-         binding_number = 0
-         for hotkey in hotkey_dict.values():
+         for binding_number, hotkey in enumerate(hotkey_dict.values()):
+            hotkey
             if not hotkey.on_up:
-               variables['bound_button_widget_%i' % binding_number].configure(text = [k for k in hotkey.keys])
-               variables['entry_%i' % binding_number].set(hotkey.value)
-               binding_number += 1
+               keyboard_frame.widget_variables['binding_label_widget_%i' % binding_number].configure(text = [k for k in hotkey.keys])
+               keyboard_frame.widget_variables['binding_%i' % binding_number].set(hotkey.value)
             else:
-               variables['auto_center_var'].set(hotkey.value)
-               variables['auto_center_checkbutton_var'].set(True)
+               keyboard_frame.widget_variables['auto_center_value_var'].set(hotkey.value)
+               keyboard_frame.widget_variables['auto_center_checkbutton_var'].set(True)
+            if hotkey.keyset is not None:
+               keyboard_frame.widget_variables['keyset'].set(hotkey.keyset)
+         vjoy_axis_frame.widget_variables['input_type_radio_var'].set(vjoy_axis_frame.KEYBOARD_FRAME_INDEX)
 
       # Setup loaded joystick UI settings
-      for vjoy_tuple, pygame_tuple in mappings.items():
+      for vjoy_tuple, data in mappings.items():
          # Setup variables
+          # Setup variables
          vjoy_id, _, vjoy_axis = vjoy_tuple
-         axis_index = self.joystick_manager.get_axis_index(vjoy_axis)
-         variables = self.frames[vjoy_id - 1].tk_variables[axis_index]
+         vjoy_frame = self.frames[vjoy_id - 1]
+         vjoy_axis_frame = vjoy_frame.frames[self.joystick_manager.get_axis_index(vjoy_axis)]
+         joystick_frame = vjoy_axis_frame.frames[vjoy_axis_frame.JOYSTICK_FRAME_INDEX]
          # Configure UI
-         variables['input_type_radio'].set('joystick')
-         pygame_id, pygame_component, pygame_axis, mapping_func_name, is_inverted = pygame_tuple
-         variables['joystick_id_widget'].current(pygame_id)
-         variables['joystick_axis_widget'].current(pygame_axis)
-         variables['joystick_method'].set(mapping_func_name)
-         variables['invert_axis'].set(is_inverted)
+         joystick_frame.joy_id_widget.current(data['pygame_id'])
+         joystick_frame.joy_axis_widget.current(data['pygame_component_id'])
+         joystick_frame.widget_variables['joystick_method'].set(data['mapping_func_name'])
+         joystick_frame.widget_variables['joystick_deadzone'].set(data['joystick_deadzone'])
+         joystick_frame.widget_variables['joystick_maxzone'].set(data['joystick_maxzone'])
+         joystick_frame.widget_variables['joystick_inverted'].set(data['joystick_inverted'])
+         vjoy_axis_frame.widget_variables['input_type_radio_var'].set(vjoy_axis_frame.JOYSTICK_FRAME_INDEX)
 
       return
 

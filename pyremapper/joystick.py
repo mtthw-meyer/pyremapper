@@ -25,7 +25,7 @@ def linear(x):
 
 class JoystickManager(object):
    __max_vJoysticks = 8
-   __HID_OFFSET = 0x2F
+   __HID_OFFSET = 0x30
 
    def __init__(self, mapping_functions):
       # Initialize pygame
@@ -52,9 +52,10 @@ class JoystickManager(object):
          self.pygame_joysticks[id].init()
       return
 
-   def update_map(self, vjoy_tuple, pygame_id, pygame_component, pygame_component_id, mapping_func_offset, is_inverted):
-      mapping_func_name = self.mapping_functions.keys()[mapping_func_offset]
-      self.mappings[vjoy_tuple] = (pygame_id, pygame_component, pygame_component_id, mapping_func_name, is_inverted)
+   def update_map(self, vjoy_tuple, **kwargs):
+      mapping_func_names = self.mapping_functions.keys()
+      kwargs['mapping_func_name'] = mapping_func_names[kwargs['mapping_func_offset']]
+      self.mappings[vjoy_tuple] = kwargs
       return
 
    def remove_map(self, vjoy_tuple):
@@ -62,12 +63,12 @@ class JoystickManager(object):
          self.mappings.pop(vjoy_tuple)
       return
 
-   def run_map(self, vjoy_id, vjoy_component, vjoy_component_id, pygame_id, pygame_component, pygame_component_id, mapping_func, is_inverted):
-      if pygame_component == pygameJoyComponent.axis:
-         pygame_value = self.pygame_joysticks[pygame_id].get_axis(pygame_component_id)
-         if is_inverted:
+   def run_map(self, vjoy_tuple, **kwargs):
+      if kwargs['pygame_component'] == pygameJoyComponent.axis:
+         pygame_value = self.pygame_joysticks[kwargs['pygame_id']].get_axis(kwargs['pygame_component_id'])
+         if kwargs['joystick_inverted']:
             pygame_value = pygame_value * -1
-         pygame_value = self.mapping_functions[mapping_func](pygame_value)
+         pygame_value = self.mapping_functions[kwargs['mapping_func_name']](pygame_value)
          # Make values in bounds
          if pygame_value > 1.0:
             pygame_value = 1.0
@@ -75,7 +76,7 @@ class JoystickManager(object):
             pygame_value = -1.0
       else:
          return False
-      self.set_component_value(vjoy_id, vjoy_component, vjoy_component_id, pygame_value)
+      self.set_component_value(*(vjoy_tuple + (pygame_value,)))
       return
 
    def set_component_value(self, vjoy_id, vjoy_component, vjoy_component_id, value):
@@ -109,8 +110,8 @@ class JoystickManager(object):
       while self.running:
          pygame.event.pump()
          self.vjoy.pump()
-         for vjoy_tuple, pygame_tuple in self.mappings.items():
-            self.run_map(*(vjoy_tuple + pygame_tuple))
+         for vjoy_tuple, data in self.mappings.items():
+            self.run_map(vjoy_tuple, **data)
          time.sleep(.01)
       return
 

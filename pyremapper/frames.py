@@ -10,7 +10,6 @@ from utils import *
 from enum import Enum
 
 
-
 class vJoyFrame(ttk.Frame):
    def __init__(self, parent, vJoystick, joystick_manager, key_mouse_manager, **kwargs):
       #TK setup
@@ -26,7 +25,7 @@ class vJoyFrame(ttk.Frame):
             joystick_manager,
             key_mouse_manager,
             axis,
-            text = 'Axis %s' % joystick_manager.get_axis_index(axis)
+            text = 'Axis %s' % (joystick_manager.get_axis_index(axis) + 1)
          )
          self.frames.append(axis_frame)
          axis_frame.pack(side = 'top')
@@ -54,31 +53,35 @@ class RemapperLabelFrame(ttk.LabelFrame):
 
 
 class AxisFrame(RemapperLabelFrame):
+   KEYBOARD_FRAME_INDEX = 0
+   JOYSTICK_FRAME_INDEX = 1
+   MOUSE_FRAME_INDEX = 2
+   
    def child_init(self):
       self.radio_frame = self.create_input_select_radios(self)
 
       self.frames = list()
       self.frames.append( KeyboardFrame(self, self.vJoystick, self.joystick_manager, self.key_mouse_manager, self.axis, text = 'Keyboard') )
       self.frames.append( JoystickFrame(self, self.vJoystick, self.joystick_manager, self.key_mouse_manager, self.axis, text = 'Joystick') )
-      self.frames.append( MouseFrame(self,    self.vJoystick, self.joystick_manager, self.key_mouse_manager,  self.axis,text = 'Mouse') )
+      #self.frames.append( MouseFrame(self,    self.vJoystick, self.joystick_manager, self.key_mouse_manager,  self.axis,text = 'Mouse') )
       for index, frame in enumerate(self.frames):
-         frame.grid(row = 1, column = index + 2, stick='N')
+         frame.grid(row = 1, column = index + 2, stick='NEWS')
       self.widget_variables['input_type_radio_var'].set(-1)
       return
 
    def create_input_select_radios(self, parent):
       radio_frame = ttk.Frame(parent)
-      radio_frame.grid(row = 1, column = 1)
+      radio_frame.grid(row = 1, column = 1, stick = 'N')
 
       # Create radio buttons
       self.widget_variables['input_type_radio_var'] = Tkinter.IntVar()
       radio_none = ttk.Radiobutton(radio_frame, text = 'None', variable = self.widget_variables['input_type_radio_var'], value = -1)
       radio_none.grid(row = 1, column = 1, stick='W')
-      radio_keyboard = ttk.Radiobutton(radio_frame, text = 'Keyboard', variable = self.widget_variables['input_type_radio_var'], value = 0)
+      radio_keyboard = ttk.Radiobutton(radio_frame, text = 'Keyboard', variable = self.widget_variables['input_type_radio_var'], value = self.KEYBOARD_FRAME_INDEX)
       radio_keyboard.grid(row = 2, column = 1, stick='W')
-      radio_joystick = ttk.Radiobutton(radio_frame, text = 'Joystick', variable = self.widget_variables['input_type_radio_var'], value = 1)
+      radio_joystick = ttk.Radiobutton(radio_frame, text = 'Joystick', variable = self.widget_variables['input_type_radio_var'], value = self.JOYSTICK_FRAME_INDEX)
       radio_joystick.grid(row = 3, column = 1, stick='W')
-      radio_mouse = ttk.Radiobutton(radio_frame, text = 'Mouse', variable = self.widget_variables['input_type_radio_var'], value = 2, state = DISABLE)
+      radio_mouse = ttk.Radiobutton(radio_frame, text = 'Mouse', variable = self.widget_variables['input_type_radio_var'], value = self.MOUSE_FRAME_INDEX, state = DISABLE)
       radio_mouse.grid(row = 4, column = 1, stick='W')
       
       self.widget_variables['input_type_radio_var'].trace('w', self.input_type_radio_changed_callback)
@@ -97,6 +100,7 @@ class AxisFrame(RemapperLabelFrame):
             # Disable hotkey(s)
             if index == 1 and self.vjoy_tuple in self.key_mouse_manager.hotkeys:
                self.key_mouse_manager.hotkeys[self.vjoy_tuple].clear()
+               print 'Disabling', self.vjoy_tuple
             elif index == 2:
                self.joystick_manager.remove_map(self.vjoy_tuple)
       return
@@ -199,7 +203,6 @@ class KeyboardFrame(RemapperLabelFrame):
       keyset = self.get_keyset()
       self.key_mouse_manager.add_hotkey(keys_down, value, self.vjoy_tuple, bind_number, keyset = keyset)
       # Trigget auto center update
-      axis_number = self.joystick_manager.get_axis_index(self.vjoy_tuple[2])
       auto_center_check_var = self.widget_variables['auto_center_checkbutton_var']
       auto_center_check_var.set(auto_center_check_var.get())
       return
@@ -216,7 +219,6 @@ class KeyboardFrame(RemapperLabelFrame):
       keyset = self.get_keyset()
       self.key_mouse_manager.update_hotkey(self.vjoy_tuple, bind_number, value = value)
       # Trigget auto center update
-      axis_number = self.joystick_manager.get_axis_index(self.vjoy_tuple[2])
       auto_center_check_var = self.widget_variables['auto_center_checkbutton_var']
       auto_center_check_var.set(auto_center_check_var.get())
       return
@@ -256,142 +258,127 @@ class KeyboardFrame(RemapperLabelFrame):
       self.key_mouse_manager.update_hotkeys(self.vjoy_tuple, keyset = keyset)
       return
 
+
 class JoystickFrame(RemapperLabelFrame):
    def child_init(self):
-      pass
-class MouseFrame(RemapperLabelFrame):
-   def child_init(self):
-      pass
+      self.joy_id_widget      = None
+      self.joy_axis_widget    = None
+      self.joy_method_widget  = None
 
-##### Old #####
-class _JoystickFrame_(ttk.Frame):
-   __num_keysets = 4
-   def __init__(self, parent, vJoystick, joystick_manager, key_mouse_manager, **kwargs):
-      #TK setup
-      ttk.Frame.__init__(self, parent, **kwargs)
-      self.parent = parent
-      self.widget_variables = dict()
+      self.widget_variables['joystick_id'] = Tkinter.StringVar()
+      self.widget_variables['joystick_axis'] = Tkinter.StringVar()
+      self.widget_variables['joystick_method'] = Tkinter.StringVar()
+      self.widget_variables['joystick_deadzone'] = Tkinter.StringVar()
+      self.widget_variables['joystick_maxzone'] = Tkinter.StringVar()
+      self.widget_variables['joystick_inverted'] = Tkinter.IntVar()
 
-      self.vJoystick = vJoystick
-      self.joystick_manager = joystick_manager
-      self.key_mouse_manager = key_mouse_manager
-      
-      for axis, data in vJoystick.axes.items():
-         vjoy_tuple = (self.vJoystick.id, vJoyComponent.axis, axis)
+      self.create_joystick_select_ui()
+      self.create_options_ui()
+      #self.create_feedback_ui()
 
-         # Setup Tkinter variables
-         axis_variables['joystick_id'] = Tkinter.StringVar()
-         axis_variables['joystick_axis'] = Tkinter.StringVar()
-         axis_variables['joystick_method'] = Tkinter.StringVar()
-
-         # Create input frames
-         self.keyboard_options(axis_frame, axis_variables, vjoy_tuple)
-         self.joystick_options(axis_frame, axis_variables, vjoy_tuple)
-         self.mouse_options(axis_frame, axis_variables)
-
+      # Setup callbacks
+      self.widget_variables['joystick_id'].trace('w', self.joystick_id_changed_callback)
+      self.widget_variables['joystick_axis'].trace('w', self.joystick_widget_changed_callback)
+      self.widget_variables['joystick_method'].trace('w', self.joystick_widget_changed_callback)
+      self.widget_variables['joystick_deadzone'].trace('w', self.joystick_widget_changed_callback)
+      self.widget_variables['joystick_maxzone'].trace('w', self.joystick_widget_changed_callback)
+      self.widget_variables['joystick_inverted'].trace('w', self.joystick_widget_changed_callback)
       return
-      
-   
 
-   
-
-   def joystick_options(self, parent, variables, vjoy_tuple):
-      # Create the joystick options frame
-      joystick_options_frame = ttk.LabelFrame(parent)
-      joystick_options_frame.grid(row = 1, column = 3, stick='N')
-      variables['frames']['joystick'] = joystick_options_frame
-
-      option_frame = ttk.Frame(joystick_options_frame)
-      option_frame.grid(row = 2, column = 1, stick='W', padx = 20)
+   def create_joystick_select_ui(self):
+      joystick_select_frame = ttk.Frame(self)
+      joystick_select_frame.grid(row = 1, column = 1, stick='W', padx = 20)
       # Joystick ID
-      ttk.Label(option_frame, text = 'Joy ID').grid( row = 1, column = 1)
+      ttk.Label(joystick_select_frame, text = 'Joy ID').grid( row = 1, column = 1)
       # Get the list of joystick names
       joystick_names  = ['%i - %s' % (joy.get_id(), joy.get_name()) for joy in self.joystick_manager.pygame_joysticks.values()]
-      joy_id_widget = ttk.Combobox(option_frame, width = 20, values = joystick_names, textvariable = variables['joystick_id'])
+      joy_id_widget = ttk.Combobox(joystick_select_frame, width = 20, values = joystick_names, textvariable = self.widget_variables['joystick_id'])
       joy_id_widget.grid( row = 1, column = 2)
       # Joystick Axis Widget
-      ttk.Label(option_frame, text = 'Joy Axis').grid( row = 1, column = 3)
-      joy_axis_widget = ttk.Combobox(option_frame, width = 5, textvariable = variables['joystick_axis'])
+      ttk.Label(joystick_select_frame, text = 'Joy Axis').grid( row = 1, column = 3)
+      joy_axis_widget = ttk.Combobox(joystick_select_frame, width = 5, textvariable = self.widget_variables['joystick_axis'])
       joy_axis_widget.grid( row = 1, column = 4)
-      # Joystick method widget
-      ttk.Label(option_frame, text = 'Method').grid( row = 1, column = 5)
-      method_widget = ttk.Combobox(
-         option_frame,
-         width = 10,
-         values = self.joystick_manager.mapping_functions.keys(),
-         textvariable = variables['joystick_method'],
-      )
-      method_widget.grid( row = 1, column = 6)
-      method_widget.current(0)
-      # Joystick invert widget
-      invert_axis = Tkinter.IntVar()
-      variables['invert_axis'] = invert_axis
-      invert_widget = ttk.Checkbutton(option_frame, text = 'Invert?', variable = invert_axis)
-      invert_widget.grid( row = 2, column = 4)
+      self.joy_id_widget = joy_id_widget
+      self.joy_axis_widget = joy_axis_widget
+      return
       
-      feedback_frame = ttk.Frame(joystick_options_frame)
-      feedback_frame.grid(row = 3, column = 1, stick='W', padx = 20)
-      # Experimental
+   def create_options_ui(self):
+      frame = ttk.LabelFrame(self, text = 'Options')
+      frame.grid(row = 2, column = 1)
+      ttk.Label(frame, text = 'Method').grid( row = 1, column = 1)
+      joy_method_widget = ttk.Combobox(
+         frame,
+         values = self.joystick_manager.mapping_functions.keys(),
+         textvariable = self.widget_variables['joystick_method'],
+      )
+      joy_method_widget.grid( row = 1, column = 2)
+      joy_method_widget.current(0)
+      self.joy_method_widget = joy_method_widget
+      
+      # Joystick deadzone
+      ttk.Label(frame, text = 'Deadzone').grid(row = 2, column = 1, pady = 5)
+      ttk.Entry(frame, width = 7, textvariable = self.widget_variables['joystick_deadzone']).grid(row = 2, column = 2, pady = 5, stick = 'W')
+      self.widget_variables['joystick_deadzone'].set('.05')
+      
+      # Joystick maxzone
+      ttk.Label(frame, text = 'Maxzone').grid(row = 3, column = 1, pady = 5)
+      ttk.Entry(frame, width = 7, textvariable = self.widget_variables['joystick_maxzone']).grid(row = 3, column = 2, pady = 5, stick = 'W')
+      self.widget_variables['joystick_maxzone'].set('.98')
+      
+
+      # Joystick invert widget
+      ttk.Label(frame, text = 'Invert?').grid(row = 4, column = 1)
+      invert_widget = ttk.Checkbutton(frame, text = '', variable = self.widget_variables['joystick_inverted'])
+      invert_widget.grid(row = 4, column = 2, stick = 'W')
+      return
+      
+   def create_feedback_ui(self):
+      feedback_frame = ttk.Frame(self)
+      feedback_frame.grid(row = 2, column = 1, stick='W', padx = 20)
       ttk.Label(feedback_frame, text = 'Input').grid( row = 1, column = 1)
       scale_input = ttk.Scale(feedback_frame, from_ = -1, to = 1)
       scale_input.grid(row = 2, column = 1, padx = 5)
       ttk.Label(feedback_frame, text = 'Output').grid( row = 1, column = 2)
       ttk.Scale(feedback_frame, from_ = -1, to = 1).grid(row = 2, column = 2, padx = 5)
-      
+      return
 
-      # Changed axes selection based on joystick ID
-      id_callback = functools.partial(self.joystick_id_changed_callback, joy_id_widget, joy_axis_widget)
-      variables['joystick_id'].trace('w', id_callback)
-      variables['joystick_id_widget'] = joy_id_widget
+   ################################# Call backs ##################################
+   @exception_handler
+   def joystick_id_changed_callback(self, *_):
+      value = self.joy_id_widget.current()
+      self.joy_axis_widget.state(ENABLE)
+      joystick = self.joystick_manager.pygame_joysticks[value]
+      self.joy_axis_widget.configure( values = range(joystick.get_numaxes()) )
+      return
 
-      joystick_widget_callback = functools.partial(self.joystick_widget_changed_callback, vjoy_tuple, joy_id_widget, joy_axis_widget, method_widget, invert_axis)
-      variables['joystick_axis'].trace('w', joystick_widget_callback)
-      variables['joystick_method'].trace('w', joystick_widget_callback)
-      invert_axis.trace('w', joystick_widget_callback)
-      variables['joystick_axis_widget'] = joy_axis_widget
+   @exception_handler
+   def joystick_widget_changed_callback(self, *_):
+      if self.joy_id_widget.current() < 0:
+         return
+      elif self.joy_axis_widget.current() < 0:
+         return
 
-      return joystick_options_frame
+      data = {
+         'pygame_id': self.joy_id_widget.current(),
+         'pygame_component': pygameJoyComponent.axis,
+         'pygame_component_id': self.joy_axis_widget.current(),
+         'mapping_func_offset': self.joy_method_widget.current(),
+         'joystick_deadzone': self.widget_variables['joystick_deadzone'].get(),
+         'joystick_maxzone':self.widget_variables['joystick_maxzone'].get(),
+         'joystick_inverted': self.widget_variables['joystick_inverted'].get(),
+      }
+      self.joystick_manager.update_map(self.vjoy_tuple, **data)
+      return
 
-   def mouse_options(self, parent, variables):
-      mouse_options_frame = ttk.LabelFrame(parent)
+
+class MouseFrame(RemapperLabelFrame):
+   def child_init(self):
+      mouse_options_frame = ttk.LabelFrame(self)
       mouse_options_frame.grid(row = 1, column = 4, stick='N')
-      variables['frames']['mouse'] = mouse_options_frame
 
       option_frame = ttk.Frame(mouse_options_frame)
       option_frame.grid(row = 2, column = 1, columnspan = 5, stick='W', padx = 20)
 
       ttk.Label(option_frame, text = 'Mouse Axis').pack(side = 'left')
       ttk.Combobox(option_frame, width = 5, values = ('', 'X', 'Y', 'Wheel')).pack(side = 'left')
-
-      return mouse_options_frame
-
-
-###############################################################################
-################################# Call backs ##################################
-###############################################################################
-
-
-   
-
-   @exception_handler
-   
-
-   @exception_handler
-   def joystick_id_changed_callback(self, id_widget, axis_widget, *_):
-      value = id_widget.current()
-      axis_widget.state(ENABLE)
-      joystick = self.joystick_manager.pygame_joysticks[value]
-      axis_widget.configure( values = range(joystick.get_numaxes()) )
-      return
-
-   @exception_handler
-   def joystick_widget_changed_callback(self, vjoy_tuple, id_widget, axis_widget, method_widget, invert_variable, *_):
-      self.joystick_manager.update_map(
-         vjoy_tuple,
-         id_widget.current(),
-         pygameJoyComponent.axis,
-         axis_widget.current(),
-         method_widget.current(),
-         invert_variable.get()
-      )
       return
