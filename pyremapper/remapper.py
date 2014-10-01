@@ -10,6 +10,7 @@ from joystick import *
 from keymouse import *
 from frames import *
 from tools import *
+from widgets import ScrollingNotebook
 
 
 class Remapper(Tkinter.Tk):
@@ -54,16 +55,22 @@ class Remapper(Tkinter.Tk):
    def initialize(self):
       self.load_settings()
       self.create_menubar()
+      
+      # Resize Behavior
+      self.grid_rowconfigure(0, weight=1)
+      self.grid_columnconfigure(0, weight=1)
 
-      self.notebook = ttk.Notebook(self)
-      self.notebook.pack(fill='both', expand='yes', padx=5, pady=5)
+      self.notebook = ScrollingNotebook(self)
+      self.notebook.frame.grid(row = 0, column = 0, sticky = 'nsew')
       self.frames = list()
       # For each vJoystick create a tab
       for vJoy_id, vJoystick in self.joystick_manager.get_vJoysticks().items():
-         frame = JoystickFrame(vJoystick, self.joystick_manager, self.key_mouse_manager, self)
+         frame = vJoyFrame(self.notebook, vJoystick, self.joystick_manager, self.key_mouse_manager)
          frame.pack()
          self.frames.append(frame)
          self.notebook.add(frame, text='Virtual Joystick %s' % vJoy_id)
+
+      return
 
    def create_menubar(self):
       # Create the root menu, adding it to self
@@ -74,6 +81,7 @@ class Remapper(Tkinter.Tk):
       file_menu.add_command(label = 'Load...', command = self.hotkeys_load)
       file_menu.add_command(label = 'Save', command = self.hotkeys_save)
       file_menu.add_command(label = 'Save as...', command = self.hotkeys_save_as)
+      file_menu.add_separator()
       file_menu.add_command(label = 'Quit', command = self.destroy)
       self.menu.add_cascade(label = 'File', menu = file_menu)
 
