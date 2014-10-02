@@ -135,7 +135,7 @@ class Remapper(Tkinter.Tk):
          vjoy_id, _, vjoy_axis = vjoy_tuple
          vjoy_frame = self.frames[vjoy_id - 1]
          vjoy_axis_frame = vjoy_frame.frames[self.joystick_manager.get_axis_index(vjoy_axis)]
-         keyboard_frame = vjoy_axis_frame.frames[vjoy_axis_frame.KEYBOARD_FRAME_INDEX]
+         keyboard_frame = vjoy_axis_frame.frames[vjoy_axis_frame.KEYBOARD_FRAME]
          # Configure UI
          for binding_number, hotkey in enumerate(hotkey_dict.values()):
             hotkey
@@ -147,16 +147,15 @@ class Remapper(Tkinter.Tk):
                keyboard_frame.widget_variables['auto_center_checkbutton_var'].set(True)
             if hotkey.keyset is not None:
                keyboard_frame.widget_variables['keyset'].set(hotkey.keyset)
-         vjoy_axis_frame.widget_variables['input_type_radio_var'].set(vjoy_axis_frame.KEYBOARD_FRAME_INDEX)
+         vjoy_axis_frame.widget_variables['input_type_radio_var'].set(vjoy_axis_frame.KEYBOARD_FRAME)
 
       # Setup loaded joystick UI settings
       for vjoy_tuple, data in mappings.items():
          # Setup variables
-          # Setup variables
          vjoy_id, _, vjoy_axis = vjoy_tuple
          vjoy_frame = self.frames[vjoy_id - 1]
          vjoy_axis_frame = vjoy_frame.frames[self.joystick_manager.get_axis_index(vjoy_axis)]
-         joystick_frame = vjoy_axis_frame.frames[vjoy_axis_frame.JOYSTICK_FRAME_INDEX]
+         joystick_frame = vjoy_axis_frame.frames[vjoy_axis_frame.JOYSTICK_FRAME]
          # Configure UI
          joystick_frame.joy_id_widget.current(data['pygame_id'])
          joystick_frame.joy_axis_widget.current(data['pygame_component_id'])
@@ -164,7 +163,7 @@ class Remapper(Tkinter.Tk):
          joystick_frame.widget_variables['joystick_deadzone'].set(data['joystick_deadzone'])
          joystick_frame.widget_variables['joystick_maxzone'].set(data['joystick_maxzone'])
          joystick_frame.widget_variables['joystick_inverted'].set(data['joystick_inverted'])
-         vjoy_axis_frame.widget_variables['input_type_radio_var'].set(vjoy_axis_frame.JOYSTICK_FRAME_INDEX)
+         vjoy_axis_frame.widget_variables['input_type_radio_var'].set(vjoy_axis_frame.JOYSTICK_FRAME)
 
       return
 

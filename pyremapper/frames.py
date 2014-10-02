@@ -53,9 +53,9 @@ class RemapperLabelFrame(ttk.LabelFrame):
 
 
 class AxisFrame(RemapperLabelFrame):
-   KEYBOARD_FRAME_INDEX = 0
-   JOYSTICK_FRAME_INDEX = 1
-   MOUSE_FRAME_INDEX = 2
+   KEYBOARD_FRAME = 0
+   JOYSTICK_FRAME = 1
+   MOUSE_FRAME = 2
    
    def child_init(self):
       self.radio_frame = self.create_input_select_radios(self)
@@ -77,11 +77,11 @@ class AxisFrame(RemapperLabelFrame):
       self.widget_variables['input_type_radio_var'] = Tkinter.IntVar()
       radio_none = ttk.Radiobutton(radio_frame, text = 'None', variable = self.widget_variables['input_type_radio_var'], value = -1)
       radio_none.grid(row = 1, column = 1, stick='W')
-      radio_keyboard = ttk.Radiobutton(radio_frame, text = 'Keyboard', variable = self.widget_variables['input_type_radio_var'], value = self.KEYBOARD_FRAME_INDEX)
+      radio_keyboard = ttk.Radiobutton(radio_frame, text = 'Keyboard', variable = self.widget_variables['input_type_radio_var'], value = self.KEYBOARD_FRAME)
       radio_keyboard.grid(row = 2, column = 1, stick='W')
-      radio_joystick = ttk.Radiobutton(radio_frame, text = 'Joystick', variable = self.widget_variables['input_type_radio_var'], value = self.JOYSTICK_FRAME_INDEX)
+      radio_joystick = ttk.Radiobutton(radio_frame, text = 'Joystick', variable = self.widget_variables['input_type_radio_var'], value = self.JOYSTICK_FRAME)
       radio_joystick.grid(row = 3, column = 1, stick='W')
-      radio_mouse = ttk.Radiobutton(radio_frame, text = 'Mouse', variable = self.widget_variables['input_type_radio_var'], value = self.MOUSE_FRAME_INDEX, state = DISABLE)
+      radio_mouse = ttk.Radiobutton(radio_frame, text = 'Mouse', variable = self.widget_variables['input_type_radio_var'], value = self.MOUSE_FRAME, state = DISABLE)
       radio_mouse.grid(row = 4, column = 1, stick='W')
       
       self.widget_variables['input_type_radio_var'].trace('w', self.input_type_radio_changed_callback)
@@ -98,10 +98,9 @@ class AxisFrame(RemapperLabelFrame):
             # Disable GUI
             set_state_recursive(frame, DISABLE)
             # Disable hotkey(s)
-            if index == 1 and self.vjoy_tuple in self.key_mouse_manager.hotkeys:
+            if index == self.KEYBOARD_FRAME and self.vjoy_tuple in self.key_mouse_manager.hotkeys:
                self.key_mouse_manager.hotkeys[self.vjoy_tuple].clear()
-               print 'Disabling', self.vjoy_tuple
-            elif index == 2:
+            elif index == self.JOYSTICK_FRAME:
                self.joystick_manager.remove_map(self.vjoy_tuple)
       return
 
