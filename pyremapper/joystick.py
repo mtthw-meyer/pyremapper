@@ -20,8 +20,22 @@ pygameJoyComponent = Enum([
    'ball',
 ])
 
+
 def linear(x):
    return x
+
+
+def split_high(x):
+   if x < 0:
+      return 0
+   return x
+
+
+def split_low(x):
+   if x > 0:
+      return 0
+   return x
+
 
 class JoystickManager(object):
    __max_vJoysticks = 8
@@ -35,6 +49,8 @@ class JoystickManager(object):
       self.mappings = dict()
       self.mapping_functions = OrderedDict([
          ('Linear', linear),
+         ('Split High (>0)', split_high),
+         ('Split Low  (<0)', split_low),
       ])
       # Add user mapping functions
       if mapping_functions:
