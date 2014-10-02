@@ -4,12 +4,6 @@ from pyremapper.remapper import Remapper
 
 # The input value is from 1 to -1, with 0 being centered
 # Out of bounds values will be rouned to the nearest valid value
-def deadzone(value):
-   if abs(value) < 0.05:
-      return 0
-   return value
-
-
 def logarithmic(value):
    import math
    # Log base 10 of 10 is 1 so input values to log should be between 1-10
@@ -37,10 +31,6 @@ def squared(value):
 
 
 mapping_functions = [
-   {
-      'name':     'Deadzone',
-      'function': deadzone,
-   },
    {
       'name':     'Logarithmic',
       'function': logarithmic,
