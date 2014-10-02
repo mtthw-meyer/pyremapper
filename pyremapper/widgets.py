@@ -11,6 +11,7 @@ class ScrollingNotebook(ttk.Notebook):
       # Create canvas parent to contain the scrollbars
       self.canvas = Tkinter.Canvas(self.frame)
       self.canvas.grid(row = 0, column = 0, sticky='nsew')
+      self.canvas.configure( highlightthickness = 0 )
       ttk.Notebook.__init__(self, self.canvas)
 
       # These scrollbars are made for scrollin'
