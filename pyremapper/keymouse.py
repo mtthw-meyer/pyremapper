@@ -5,6 +5,8 @@ import threading
 import pyHook
 
 
+
+
 class KeyMouseManager(object):
    def __init__(self, joystick_manager):
       self.joystick_manager = joystick_manager
@@ -14,22 +16,33 @@ class KeyMouseManager(object):
       self.mappings = dict()
 
       # Create a hook manager
-      self._hook_manager = pyHook.HookManager()
+      self.hook_manager = pyHook.HookManager()
 
       # Setup listeners for key down and key up events
-      self._hook_manager.KeyDown = self.on_key_down
-      self._hook_manager.KeyUp = self.on_key_up
+      self.hook_manager.KeyDown = self.on_key_down
+      self.hook_manager.KeyUp = self.on_key_up
+      self.hook_manager.MouseAllButtonsDown = self.on_key_down
+      self.hook_manager.MouseAllButtonsUp = self.on_key_up
 
-      # Set the keyboard hook
-      self._hook_manager.HookKeyboard()
+      # Set the hooks
+      self.hook_manager.HookKeyboard()
+      self.hook_manager.HookMouse()
       return
 
    def get_keys_down(self):
       return self.keys_down.copy()
 
-   def on_key_down(self, event):
-      self.keys_down.add(ID2Key[event.KeyID])
+   def on_mouse_event(self, event):
+      # Ignoring mouse events
+      return True
 
+   def on_key_down(self, event):
+      # Ignoring mouse events
+      if event.MessageName.startswith('mouse'):
+         # Trim ' down' from the end of the event name
+         self.keys_down.add(event.MessageName[:-5])
+      else:
+         self.keys_down.add(ID2Key[event.KeyID])
       for hotkey_dict in self.hotkeys.values():
          for hotkey in hotkey_dict.values():
             # Ignore on up hotkeys
@@ -45,8 +58,15 @@ class KeyMouseManager(object):
       return True
 
    def on_key_up(self, event):
-      key_up = ID2Key[event.KeyID]
-      key_up_set = frozenset(key_up)
+      # Ignoring mouse events
+      if event.MessageName.startswith('mouse'):
+         # Trim ' up' from the end of the event name
+         key_up = event.MessageName[:-3]
+         key_up_set = frozenset([key_up])
+      else:
+         key_up = ID2Key[event.KeyID]
+         key_up_set = frozenset(key_up)
+      print key_up_set, self.keys_down
 
       for hotkey_dict in self.hotkeys.values():
          for hotkey in hotkey_dict.values():

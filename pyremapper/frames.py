@@ -63,7 +63,7 @@ class AxisFrame(RemapperLabelFrame):
       self.frames = list()
       self.frames.append( KeyboardFrame(self, self.vJoystick, self.joystick_manager, self.key_mouse_manager, self.axis, text = 'Keyboard') )
       self.frames.append( JoystickFrame(self, self.vJoystick, self.joystick_manager, self.key_mouse_manager, self.axis, text = 'Joystick') )
-      #self.frames.append( MouseFrame(self,    self.vJoystick, self.joystick_manager, self.key_mouse_manager,  self.axis,text = 'Mouse') )
+      #self.frames.append( MouseFrame(self,    self.vJoystick, self.joystick_manager, self.key_mouse_manager, self.axis, text = 'Mouse') )
       for index, frame in enumerate(self.frames):
          frame.grid(row = 1, column = index + 2, stick='NEWS')
       self.widget_variables['input_type_radio_var'].set(-1)
