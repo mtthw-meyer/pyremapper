@@ -93,7 +93,7 @@ class vJoyDevice:
                'max': max.value,
                'center': (min.value + max.value) / 2,
             }
-            if HID <= HID_USAGE_Z:
+            if HID <= HID_USAGE_RZ:
                position_data[field] = self.axes[HID]['center']
             else:
                position_data[field] = self.axes[HID]['max']

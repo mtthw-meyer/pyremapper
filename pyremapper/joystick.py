@@ -84,12 +84,17 @@ class JoystickManager(object):
          pygame_value = self.pygame_joysticks[kwargs['pygame_id']].get_axis(kwargs['pygame_component_id'])
          if kwargs['joystick_inverted']:
             pygame_value = pygame_value * -1
-         pygame_value = self.mapping_functions[kwargs['mapping_func_name']](pygame_value)
-         # Make values in bounds
-         if pygame_value > 1.0:
-            pygame_value = 1.0
-         elif pygame_value < -1.0:
-            pygame_value = -1.0
+         if abs(pygame_value) <= kwargs['joystick_deadzone']:
+            pygame_value = 0.0
+         elif abs(pygame_value) >= kwargs['joystick_maxzone']:
+            pygame_value = round(pygame_value)
+         else:
+            pygame_value = self.mapping_functions[kwargs['mapping_func_name']](pygame_value)
+            # Make values in bounds
+            if pygame_value > 1.0:
+               pygame_value = 1.0
+            elif pygame_value < -1.0:
+               pygame_value = -1.0
       else:
          return False
       self.set_component_value(*(vjoy_tuple + (pygame_value,)))

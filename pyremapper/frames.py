@@ -291,11 +291,11 @@ class JoystickFrame(RemapperLabelFrame):
       ttk.Label(joystick_select_frame, text = 'Joy ID').grid( row = 1, column = 1)
       # Get the list of joystick names
       joystick_names  = ['%i - %s' % (joy.get_id(), joy.get_name()) for joy in self.joystick_manager.pygame_joysticks.values()]
-      joy_id_widget = ttk.Combobox(joystick_select_frame, width = 20, values = joystick_names, textvariable = self.widget_variables['joystick_id'])
+      joy_id_widget = ttk.Combobox(joystick_select_frame, width = 25, values = joystick_names, textvariable = self.widget_variables['joystick_id'])
       joy_id_widget.grid( row = 1, column = 2)
       # Joystick Axis Widget
       ttk.Label(joystick_select_frame, text = 'Joy Axis').grid( row = 1, column = 3)
-      joy_axis_widget = ttk.Combobox(joystick_select_frame, width = 5, textvariable = self.widget_variables['joystick_axis'])
+      joy_axis_widget = ttk.Combobox(joystick_select_frame, width = 3, textvariable = self.widget_variables['joystick_axis'])
       joy_axis_widget.grid( row = 1, column = 4)
       self.joy_id_widget = joy_id_widget
       self.joy_axis_widget = joy_axis_widget
@@ -362,10 +362,15 @@ class JoystickFrame(RemapperLabelFrame):
          'pygame_component': pygameJoyComponent.axis,
          'pygame_component_id': self.joy_axis_widget.current(),
          'mapping_func_offset': self.joy_method_widget.current(),
-         'joystick_deadzone': self.widget_variables['joystick_deadzone'].get(),
-         'joystick_maxzone':self.widget_variables['joystick_maxzone'].get(),
          'joystick_inverted': self.widget_variables['joystick_inverted'].get(),
       }
+      try:
+         data['joystick_deadzone'] = float( self.widget_variables['joystick_deadzone'].get() )
+         data['joystick_maxzone'] = float( self.widget_variables['joystick_maxzone'].get() )
+      except ValueError:
+         data['joystick_deadzone'] = 0.0
+         data['joystick_maxzone'] = 1.0
+      
       self.joystick_manager.update_map(self.vjoy_tuple, **data)
       return
 

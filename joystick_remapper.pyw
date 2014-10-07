@@ -7,27 +7,15 @@ from pyremapper.remapper import Remapper
 def logarithmic(value):
    import math
    # Log base 10 of 10 is 1 so input values to log should be between 1-10
-   in_range_value = (abs(value) + 1) * 10
+   in_range_value = (abs(value) * 10) + 1
    if value < 0:
       return math.log(in_range_value, 10) * -1
    else:
       return math.log(in_range_value, 10)
 
 
-def squared(value):
-   # If less than 5% deflection ignore it
-   if abs(value) < 0.05:
-      return 0
-   # Any where in the last 5% deflection should be treated as 100%
-   if abs(value) >= .95:
-      return round(value)
-   # else reutrn the square
-   # 10% is 1% deflection
-   # 20% is 4% deflection
-   # 30% is 9% deflection
-   # 40% is 16% deflection
-   # 50% is 25% deflection
-   return (value * value)
+def sigmoid(value):
+      return value / (1 + abs(value))
 
 
 mapping_functions = [
@@ -36,8 +24,8 @@ mapping_functions = [
       'function': logarithmic,
    },
    {
-      'name':     'Squared Deadzone',
-      'function': squared,
+      'name':     'Sigmoid',
+      'function': sigmoid,
    },
 ]
 
