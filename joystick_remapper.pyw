@@ -15,7 +15,7 @@ def logarithmic(value):
 
 
 def sigmoid(value):
-      return value / (1 + abs(value))
+      return (1.25 * value) / (1 + abs(value))
 
 
 mapping_functions = [
